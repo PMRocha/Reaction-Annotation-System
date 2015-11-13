@@ -1,0 +1,36 @@
+body {
+  background-image: url("../img/background2.png");  
+}
+
+.centered{
+    margin: 0 auto;
+}
+
+a:link {
+	text-decoration:none;
+}
+
+p.thick {
+	font-weight:bold;
+}
+
+input.text {
+    height: 100px;
+}
+
+table{
+  background-color: #FAFAFA;
+}
+
+table.test{
+  background-color: transparent;
+}
+
+.table th {
+	text-align:center;
+}
+
+.table td {
+	text-align:center;
+}
+

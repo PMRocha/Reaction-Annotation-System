@@ -1,0 +1,200 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %}Tweet Sentiment Annotation{% endblock title %}</title>
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="{{bootstrap_find_resource('css/bootstrap.css', cdn='bootstrap')}}" rel="stylesheet" media="screen">
+	<link href="/static/css/style.css" rel="stylesheet">
+
+    {%- endblock styles %}
+	
+    {%- endblock head %}
+  </head>
+  
+  	
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+   
+
+    {% block scripts %}
+    <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+    <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+	<script>
+		function selectPeriodicity()
+		{
+			var mylist=document.getElementById("myList");
+			console.log(mylist.options[mylist.selectedIndex].text);
+			polarity = mylist.options[mylist.selectedIndex].text;
+		}
+
+		function selectAllUsers()
+		{
+			var table = document.getElementById("tableUsers");	
+			for (var i = 0, row; row = table.rows[i]; i++) {
+				for (var j = 0, col; col = row.cells[j]; j++) {
+					var elem1 = col.getElementsByTagName("label")[0];
+					if(typeof elem1 != "undefined"){
+						var elem2 = elem1.getElementsByTagName("input")[0];
+						if(elem2.checked==false)
+							elem2.checked=true;
+						else
+							elem2.checked=false;
+					}
+				}
+			}
+		}
+	</script>
+    {%- endblock scripts %}
+    
+	
+  <div class="container">
+  
+	<div class="row">
+		<div class="col-md-10">
+			<h1>Tweet Sentiment Annotation System</h1>
+		</div>
+		<div class="col-md-2" style="align:right;margin-top: 30px;">
+			
+			{% if current_user.get_id() != None %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("profile")}} class="btn btn-info btn-xs" role="button" style="width:50px">Profile</a>
+					<a href={{url_for("logout")}} class="btn btn-info btn-xs" role="button" style="width:50px">Logout</a>					
+				</p>
+			{% else %}
+				<p>
+					<a href={{url_for("hello")}}class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("login")}}class="btn btn-info btn-xs" role="button" style="width:50px">Login</a>
+				</p>
+			{% endif %}	
+		</div>
+	</div>
+	
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	  {% if messages %}
+	  
+		{% for category, message in messages %}
+			{% if category == "error" %}
+				<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>     
+			{% elif category == "success" %}			
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>
+			{% endif %}
+		{% endfor %}	
+	  {% endif %}
+	{% endwith %}
+
+
+	<div class="row">
+		
+		<div class="col-md-1"></div>
+		<div class="col-md-10">
+
+				<form action="/addCampaign" method="post" class="form-inline">
+					<p><div>
+						<label>Name</label>
+						<input type="text" class="form-control" id="name" name="name" size="150" placeholder="Enter campaign name">
+					</div></p>	
+					<div class="row">
+						<div class="col-md-6">
+							<table class="test" style="background-color=transparent;">
+								<tr>
+									<td><label for="startDate">Start Date  </label></td>
+									<td><input id="startDate" name="startDate" type="date" value={{start_date}}/></td>
+								</tr>
+								<tr>
+									<td><label for="endDate">End Date  </label></td>
+									<td><input id="endDate" name="endDate" type="date" value={{end_date}}/></td>
+								</tr>
+								<tr>
+									<td><label for="period">Frequency of each run </label></td>
+									<td><select name="period" id="myList" onchange="selectPeriodicity()"> 
+									  <option>Daily</option>
+									  <option>Weekly</option>
+									  <option>Monthly</option>  
+									</select></td>
+								</tr>
+								<tr>									
+									<td><label for="days">Select content from the last </label></td>									
+									<td><input type="text" id="days" name="days" size="3" >
+									<label> days </label></td>
+								</tr>
+								<tr>									
+									<td><label for="one_shot">Number of one-shot users </label></td>									
+									<td><input type="text" id="one-shot" name="one-shot" size="3" value="0" ></td>
+								</tr>
+								<tr>									
+									<td><label for="number_annotations">Number of annotations per user/run </label></td>									
+									<td><input type="text" id="number_annotations" name="number_annotations" size="3" value="30" ></td>
+								</tr>
+							</table>
+						</div>
+						<div class="col-md-6">
+							<label for="days">Solr Query</label>
+							<textarea name="solr" rows="5" cols="70">*:*</textarea>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6" style="height:250px;overflow:auto;">
+							<table id="tableUsers" class="table table-hover">
+								<tr>
+									<th><label class="checkbox"><input type="checkbox" onClick="selectAllUsers();"></label></th>
+									<th>User</th>
+								</tr>
+								{%- for row in users %}
+									<tr>		
+										<td><label class="checkbox"><input name="selectedUsers" value="{{row.id}}" type="checkbox"></label></td>
+										<td style="text-align:left">{{row.name}}</td>										
+									</tr>
+								{%- endfor %}
+							</table>
+						</div>						
+						<div class="col-md-6" style="height:250px;overflow:auto;">
+							<table class="table table-hover">
+								<tr>
+									<th></th>
+									<th>Script</th>
+								</tr>
+								{%- for row in scripts %}
+									<tr>		
+										<td><label class="checkbox"><input name="selectedScripts" value="{{row.id}}" type="radio"></label></td>
+										<td>{{row.name}}</td>										
+									</tr>
+								{%- endfor %}
+							</table>
+						</div>
+					</div>
+					<p></p>					
+					<p><button type="submit" class="btn btn-primary" style="float:right;">Submit</button></p>
+				</form>
+
+		</div>
+		</form>
+	</div>
+
+  </div>
+  
+  {%- endblock body %}
+</body> 
+	
+
+	
+{%- endblock html %}
+</html>
+{% endblock doc -%}
+

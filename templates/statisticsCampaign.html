@@ -1,0 +1,130 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %}Tweet Sentiment Annotation{% endblock title %}</title>
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="{{bootstrap_find_resource('css/bootstrap.css', cdn='bootstrap')}}" rel="stylesheet" media="screen">
+	<link href="/static/css/style.css" rel="stylesheet">
+    {%- endblock styles %}
+	
+    {%- endblock head %}
+  </head>
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+   
+
+    {% block scripts %}
+    <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+    <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+	
+    {%- endblock scripts %}
+    
+	
+  <div class="container">
+  
+	<div class="row">
+		<div class="col-md-10">
+			<h1>Tweet Sentiment Annotation System</h1>
+		</div>
+		<div class="col-md-2" style="align:right;margin-top: 30px;">
+			
+			{% if current_user.get_id() != None %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("profile")}} class="btn btn-info btn-xs" role="button" style="width:50px">Profile</a>
+					<a href={{url_for("logout")}} class="btn btn-info btn-xs" role="button" style="width:50px">Logout</a>					
+				</p>
+			{% else %}
+				<p>
+					<a href={{url_for("hello")}}class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("login")}}class="btn btn-info btn-xs" role="button" style="width:50px">Login</a>
+				</p>
+			{% endif %}	
+		</div>
+	</div>
+	
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	  {% if messages %}
+	  
+		{% for category, message in messages %}
+			{% if category == "error" %}
+				<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>     
+			{% elif category == "success" %}			
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>
+			{% endif %}
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+	
+	<div class="row">
+		<div class="col-md-12">
+			<div id={{ chartID|safe }} class="chart" style="height: 350px; width: 1100px"></div>
+			<script>
+				var chart_id = {{ chartID|safe }}
+				var series = {{ series|safe }}
+				var title = {{ title|safe }}
+				var xAxis = {{ xAxis|safe }}
+				var yAxis = {{ yAxis|safe }}
+				var chart = {{ chart|safe }}
+			</script>
+			<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+			<script src="http://code.highcharts.com/highcharts.js"></script>
+			<script>
+					$(document).ready(function() {
+					$(chart_id).highcharts({
+						chart: chart,
+						title: title,
+						xAxis: xAxis,
+						yAxis: yAxis,
+						series: series
+					});
+				});
+			</script>
+		</div>
+		<!--div class="col-md-2">
+			<ul class="nav nav-pills nav-stacked">
+			  {% if selected == "1" %}
+				<li class="active"><a href="http://127.0.0.1:5000/visualizations/1">Graph 1</a></li>
+			  {% else %}
+				<li><a href="http://127.0.0.1:5000/visualizations/1">Graph 1</a></li>
+			  {% endif %}
+			  
+			  {% if selected == "2" %}
+				<li class="active"><a href="http://127.0.0.1:5000/visualizations/2">Graph 2</a></li>
+			  {% else %}
+				 <li><a href="http://127.0.0.1:5000/visualizations/2">Graph 2</a></li>
+			  {% endif %}
+			  
+			  {% if selected == "3" %}
+				<li class="active"><a href="http://127.0.0.1:5000/visualizations/3">Graph 3</a></li>
+			  {% else %}
+				<li><a href="http://127.0.0.1:5000/visualizations/3">Graph 3</a></li>
+			  {% endif %}
+			</ul>
+		</div-->
+  </div>
+  
+  {%- endblock body %}
+</body> 
+	
+
+	
+{%- endblock html %}
+</html>
+{% endblock doc -%}
+

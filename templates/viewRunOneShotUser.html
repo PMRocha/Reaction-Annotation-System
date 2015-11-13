@@ -1,0 +1,160 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %}Tweet Sentiment Annotation{% endblock title %}</title>
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="{{bootstrap_find_resource('css/bootstrap.css', cdn='bootstrap')}}" rel="stylesheet" media="screen">
+	<link href="/static/css/style.css" rel="stylesheet">
+    {%- endblock styles %}
+	
+    {%- endblock head %}
+  </head>
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+   
+
+    {% block scripts %}
+    <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+    <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+	<script type="text/javascript">
+		$(window).load(function(){
+			var modal = "{{ modal }}";
+			if(modal == "true")
+				$('#myModal1').modal('show');
+		});
+	</script>
+	
+    {%- endblock scripts %}
+    
+	
+  <div class="container">
+  
+	<div class="row">
+		<div class="col-md-10">
+			<h1>Tweet Sentiment Annotation System</h1>
+		</div>
+		<div class="col-md-2" style="align:right;margin-top: 30px;">
+			
+			{% if current_user.get_id() != None %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("profile")}} class="btn btn-info btn-xs" role="button" style="width:50px">Profile</a>
+					<a href={{url_for("logout")}} class="btn btn-info btn-xs" role="button" style="width:50px">Logout</a>					
+				</p>
+			{% else %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("login")}} class="btn btn-info btn-xs" role="button" style="width:50px">Login</a>
+				</p>
+			{% endif %}	
+		</div>
+	</div>
+	
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	  {% if messages %}
+	  
+		{% for category, message in messages %}
+			{% if category == "error" %}
+				<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>     
+			{% elif category == "success" %}			
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>
+			{% endif %}
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+	
+	<div class="row">
+		<div class="col-md-10">
+		<form action="/annotation/addAnnotationOneShot" method="post" class="form-inline">
+			<input type="hidden" name="rows" value="{{annotations|length}}">
+			<table class="table table-hover" >
+				<tr>
+					<th style="width: 60%">Tweet</th>
+					<th style="width: 10%" >Polarity</th>				
+					
+				</tr>
+				{%- for row in annotations %}
+				  {% set outer_loop = loop %}
+				  <tr style="height:90px;">	
+					<input type="hidden" name="user{{loop.index}}" value="{{row.idUser}}">
+					<input type="hidden" name="run{{loop.index}}" value="{{row.idRun}}">
+					<input type="hidden" name="tweet{{loop.index}}" value="{{row.idTweet}}">
+					<td style="text-align:left;vertical-align:middle;">{{row.text}}</td>
+					
+					<td style="text-align:left;vertical-align:middle;">
+
+						{%- for label in labels %}
+							{%- if label.name != "missing" %}
+								<p><input name="polarityRow{{outer_loop.index}}" value="{{label.id}}" type="radio"> {{label.name}} </p>
+							{% endif %}
+						{%- endfor %}
+
+					</td>		
+				  </tr>
+			  
+				{%- endfor %}
+				
+			</table>
+			<p><button type="submit" class="btn btn-primary" style="float:right;">Submit</button></p>
+		</form>
+		
+		</div>
+		<!-- Modal -->
+		<div class="col-md-2">
+		    <div class="modal-body">
+			{{labelDescriptor|safe}}
+		    </div>
+		</div>
+	</div>
+		
+		<!-- Modal -->
+		<div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		  <div class="modal-dialog">
+			<div class="modal-content">
+			  <div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title" id="myModalLabel">Instructions</h4>
+			  </div>
+			  <div class="modal-body">
+				<p>Welcome to this annotation run. Please read carefully the following instructions:</p>
+				<p>1) You will be presented a maximum of 5 texts to annotate. </p>
+				<p>2) The available labels are presented on the right to the respective text. You must choose a 
+				single label for each text and ALL must be filled before submitting.</p>
+				<p>3) If you have any doubts, please refer to the panel on the right.</p>
+				<p>Thank you!!</p>
+			  </div>
+			  <div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			  </div>
+			</div>
+		  </div>
+		</div>
+
+	</div>
+	
+  </div>
+  
+  {%- endblock body %}
+</body> 
+	
+
+	
+{%- endblock html %}
+</html>
+{% endblock doc -%}
+

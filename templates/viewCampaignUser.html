@@ -1,0 +1,147 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %}Tweet Sentiment Annotation{% endblock title %}</title>
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="{{bootstrap_find_resource('css/bootstrap.css', cdn='bootstrap')}}" rel="stylesheet" media="screen">
+	<link href="/static/css/style.css" rel="stylesheet">
+    {%- endblock styles %}
+	
+    {%- endblock head %}
+  </head>
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+   
+
+    {% block scripts %}
+    <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+    <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+	<script>
+		function changeVisibility()
+		{
+			var table = document.getElementById("runs");			
+			for (var i = 0, row; row = table.rows[i]; i++) {
+				var ratio = row.getAttribute("data-ratio");			
+				if( ratio == "100.0" ){
+					if( row.style.display == 'none' )
+						row.style.display='table-row';
+					else
+						row.style.display = 'none';
+					
+				}	
+			}
+		}
+	</script>
+	
+    {%- endblock scripts %}
+    
+	
+  <div class="container">
+  
+	<div class="row">
+		<div class="col-md-10">
+			<h1>Tweet Sentiment Annotation System</h1>
+		</div>
+		<div class="col-md-2" style="align:right;margin-top: 30px;">
+			
+			{% if current_user.get_id() != None %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("profile")}} class="btn btn-info btn-xs" role="button" style="width:50px">Profile</a>
+					<a href={{url_for("logout")}} class="btn btn-info btn-xs" role="button" style="width:50px">Logout</a>					
+				</p>
+			{% else %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("login")}} class="btn btn-info btn-xs" role="button" style="width:50px">Login</a>
+				</p>
+			{% endif %}	
+
+		</div>
+	</div>
+	
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	  {% if messages %}
+	  
+		{% for category, message in messages %}
+			{% if category == "error" %}
+				<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>     
+			{% elif category == "success" %}			
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>
+			{% endif %}
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+	
+	<div class="row">
+	<div>
+		<table class="table table-hover" >
+			<tr>		
+				<td>Name</td>
+				<td>Start Date</td>
+				<td>End Date</td>
+			  </tr>	
+			  
+			  <tr>		
+				<td>{{campaign.name}}</td>
+				<td>{{campaign.startDate}}</td>
+				<td>{{campaign.endDate}}</td>
+			  </tr> 
+		</table>
+	</div>
+		
+	
+		<h3>Runs</h3>
+		<p><a href="javascript:void(0)" onclick="changeVisibility();">Show/Hide complete runs</a></p>
+		<div style="height:400px;overflow:auto;">
+			<table id="runs" class="table table-hover" >
+				<tr>	
+					<td>Number</td>
+					<td>Start Date</td>
+					<td>End Date</td>
+					<td>Status</td>
+					<td>Annotations</td>
+				  </tr>
+				{%- for row in runs %}
+				  <tr data-ratio="{{row.ratio}}">		
+					<td>{{ loop.index }}</td>
+					<td>{{row.startDate}}</td>
+					<td>{{row.endDate}}</td>
+					<td>
+						<div class="progress" rel="tooltip" title="{{row.ratio}}%" >
+						  <div class="progress-bar" role="progressbar" aria-valuenow="{{row.closed}}" aria-valuemin="0" aria-valuemax="{{row.total}}" style="width: {{row.ratio}}%;">
+						  </div>
+						</div>
+					</td>
+					<td><a href={{url_for("viewRunUser", id=row.id, modal="true")}}>Open</a></td>
+				  </tr>
+				{%- endfor %}
+			</table>
+
+		</div>
+  </div>
+  
+  {%- endblock body %}
+</body> 
+	
+
+	
+{%- endblock html %}
+</html>
+{% endblock doc -%}
+

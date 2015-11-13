@@ -1,0 +1,110 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+{%- block html %}
+  <head>
+    {%- block head %}
+    <title>{% block title %}Tweet Sentiment Annotation{% endblock title %}</title>
+    {%- block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- endblock metas %}
+
+    {%- block styles %}
+    <!-- Bootstrap -->
+    <link href="{{bootstrap_find_resource('css/bootstrap.css', cdn='bootstrap')}}" rel="stylesheet" media="screen">
+	<link href="/static/css/style.css" rel="stylesheet">
+    {%- endblock styles %}
+	
+    {%- endblock head %}
+  </head>
+  
+  	
+
+<body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+   
+
+    {% block scripts %}
+    <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
+    <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
+	
+    {%- endblock scripts %}
+    
+	
+  <div class="container">
+  
+	<div class="row">
+		<div class="col-md-10">
+			<h1>Tweet Sentiment Annotation System</h1>
+		</div>
+		<div class="col-md-2" style="align:right;margin-top: 30px;">
+			
+			{% if current_user.get_id() != None %}
+				<p>
+					<a href={{url_for("hello")}} class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("profile")}} class="btn btn-info btn-xs" role="button" style="width:50px">Profile</a>
+					<a href={{url_for("logout")}} class="btn btn-info btn-xs" role="button" style="width:50px">Logout</a>					
+				</p>
+			{% else %}
+				<p>
+					<a href={{url_for("hello")}}class="btn btn-info btn-xs" role="button" style="width:50px">Start</a>
+					<a href={{url_for("login")}}class="btn btn-info btn-xs" role="button" style="width:50px">Login</a>
+				</p>
+			{% endif %}	
+		</div>
+	</div>
+	
+	{% with messages = get_flashed_messages(with_categories=true) %}
+	  {% if messages %}
+	  
+		{% for category, message in messages %}
+			{% if category == "error" %}
+				<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>     
+			{% elif category == "success" %}			
+				<div class="alert alert-success alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+					{{ message }}
+				</div>
+			{% endif %}
+		{% endfor %}	
+	  {% endif %}
+	{% endwith %}
+
+
+	<div class="row">
+		<div class="col-md-2"></div>
+		<div class="col-md-8">
+
+				<form action="/annotation/editUser" method="post" class="form-inline">
+					<p><div class="form-group">
+						<label for="name">Name</label>
+						<input type="text" class="form-control" id="name" name="name" size="200" value="{{current_user.name}}">
+					</div></p>					
+					<p><div class="form-group">
+						<label for="email">Email</label>
+						<input type="email" class="form-control" id="email" name="email"  size="200" value={{current_user.email}}>
+					</div></p>
+					<p><div class="form-group">
+						<label for="password">Password</label>
+						<input type="password" class="form-control" id="password" name="password" size="200" placeholder="Enter new password">
+					</div></p>					
+					<p><button type="submit" class="btn btn-primary" style="float:right;">Submit</button></p>
+				</form>
+		</div>
+		</form>
+	</div>
+
+  </div>
+  
+  {%- endblock body %}
+</body> 
+	
+
+	
+{%- endblock html %}
+</html>
+{% endblock doc -%}
+
