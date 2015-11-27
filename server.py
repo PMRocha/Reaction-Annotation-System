@@ -34,14 +34,14 @@ UPLOAD_FOLDER = "/home/freixo/Git/Reaction-Annotation-System/uploads/" #'C:\Pyth
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
-SOLR_PATH = "/solr/codebits/" #"/portugal/tweets/"
-SOLR_HOST = "pattie.fe.up.pt:8080" #"reaction.fe.up.pt"
+SOLR_PATH = "/portugal/tweets/" #"/portugal/tweets/"
+SOLR_HOST = "reaction.fe.up.pt" #"reaction.fe.up.pt"
 SOLR_HTTP = "http://" + SOLR_HOST + SOLR_PATH
 SOLR_USER = "popstar_pedrosaleiro"
 SOLR_PASS = "p3dr0@2013!"
 SOLR_QUERY_SIZE = 10000
 
-s = solr.SolrConnection(SOLR_HTTP) #, http_user = SOLR_USER, http_pass= SOLR_PASS)
+s = solr.SolrConnection(SOLR_HTTP, http_user = SOLR_USER, http_pass= SOLR_PASS)
 print >> sys.stderr, s
 #subprocess that schedulles the annotations
 #subprocess.Popen('python annotationSystem/runningScript.py', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -846,7 +846,7 @@ def addCampaign1():
     command = "SELECT LAST_INSERT_ID();"
     cur.execute(command)
     for row in cur.fetchall():
-        idCampaiaddCgn = row[0]
+        idCampaign = row[0]
 
     print >> sys.stderr,"inserted into campaign"
 
@@ -960,13 +960,20 @@ def startCampaign(idCampaign):
     command = "SELECT * FROM tweets_annotation.run where initDate= " + '"' + initDate + '"' + " and status=" + '"' + "schedulled" + '"' + " and idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
     print >> sys.stderr, "1"
+    
     for row in cur.fetchall():
         idRun = row[0]
+        print str(idRun)
         startDate = str(row[1]).split(" ")[0]
+        print str(startDate)
         endDate = str(row[2]).split(" ")[0]
+        print str(endDate)
         idCampaign = row[3]
+        print str(idCampaign)
         solrQuery = row[4]
+        print str(solrQuery)
         run = Run(idRun,startDate,endDate,solrQuery,0,0,0)
+        
     print >> sys.stderr, "2"
     #get run's campaign
     campaigns = []
@@ -993,7 +1000,9 @@ def startCampaign(idCampaign):
         deltaTime = row[5]
         idScript = row[6]
         numberAnnotations = row[7]
-
+		
+		
+		
         campaign = Campaign(idCampaign, name, startDate, endDate, periodDays, deltaTime, idScript,numberAnnotations, 0,0,0)
         campaigns.append(campaign)
 
@@ -1022,13 +1031,13 @@ def startCampaign(idCampaign):
     #get campaign's one-shot users
     one_shot_users = []
     cur = db.cursor()
-    command = "select * from tweets_annotation.one_shot_user where idRun =" + str(idRun) +";"
+    command = "select * from tweets_annotation.one_shot_user where idRun =" + str(run.id) +";"
     cur.execute(command)
     for row in cur.fetchall():
         idUser = row[0]
         occupied = row[1]
         idCampaign = row[2]
-
+		
         user = OneShotUser(unicode(idUser),occupied, idCampaign,0)
         one_shot_users.append(user)
     #print >> sys.stderr, "2"
@@ -1047,6 +1056,7 @@ def startCampaign(idCampaign):
 
     script = scripts[0]
     print >> sys.stderr, "5"
+    print run.startDate
     #get tweets from Solr
     endDate = datetime.datetime.strptime(run.startDate, '%Y-%m-%d')
     initDate = endDate - datetime.timedelta(days=campaign.deltaTime)
@@ -2017,7 +2027,7 @@ def viewRunUser(id,modal):
                 nameLabel = row[1]
                 descriptionLabel = row[2]
                 if descriptionLabel != "":
-                    labelDescriptor = labelDescriptor + "<p><b>" + nameLabel.upper() + "</b>: " + descriptionLabel + "</p>"
+                    labelDescriptor = labelDescriptor + "<p><b>" + str(nameLabel.upper()) + "</b>: " + str(descriptionLabel) + "</p>"
                 label = ClassificationLabel(idLabel,nameLabel,descriptionLabel);
                 labels.append(label)
 
@@ -2299,8 +2309,8 @@ def reAssignOneShotUser(id,idRun):
 
 
 
-MAIL_USERNAME = '[insert username here]'
-MAIL_PASSWORD =  '[insert password here]'
+MAIL_USERNAME = '[insert user]'
+MAIL_PASSWORD =  '[insert pw]'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
