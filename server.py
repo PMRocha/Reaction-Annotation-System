@@ -25,12 +25,12 @@ from email.mime.text import MIMEText
 
 print >> sys.stderr, "start"
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
-                     user="root", # your username
-                     passwd="reaction", # your password
+                     user="freixo", # your username
+                     passwd="freixo", # your password
                      db="tweets_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/home/pedro/Desktop/annotationSystem2/uploads/" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/home/freixo/Git/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
@@ -349,7 +349,7 @@ def profile():
             total=row[0]
         #print >> sys.stderr, total
         #print >> sys.stderr, "\n"
-        if total != 0:	#campaigns that have already started
+        if total != 0:    #campaigns that have already started
             ratio = round(float(closed)/float(total) * 100)
             #print >> sys.stderr, ratio
             campaign = Campaign(idCampaign, name, startDate, endDate, period, deltaTime, idScript,"",closed,total,ratio)
@@ -395,7 +395,7 @@ def addUser1():
         count = row[0]
 
     if count == 0:
-        command = "insert into user (fullname, email, password_codified, isActive, isAdmin) values ("	+ '"' + name + '"' + ","  + '"' + email + '"' + ","	+ '"' + codified_password + '"' + ","	+ active + "," + admin + ");"
+        command = "insert into user (fullname, email, password_codified, isActive, isAdmin) values ("    + '"' + name + '"' + ","  + '"' + email + '"' + ","    + '"' + codified_password + '"' + ","    + active + "," + admin + ");"
         cur.execute(command)
         db.commit()
         flash("New user added successfully.","success")
@@ -466,7 +466,7 @@ def addUsersCSV1():
                 count = row[0]
 
             if count == 0:
-                command = "insert into user (fullname, email, password_codified, isActive, isAdmin) values ("	+ '"' + name + '"' + ","  + '"' + email + '"' + ","	+ '"' + codified_password + '"' + ","	+ active + "," + admin + ");"
+                command = "insert into user (fullname, email, password_codified, isActive, isAdmin) values ("    + '"' + name + '"' + ","  + '"' + email + '"' + ","    + '"' + codified_password + '"' + ","    + active + "," + admin + ");"
                 cur.execute(command)
                 sendOneEmail("Your account has been successfully registered in reaction.fe.up.pt/annotation.\n Please login to view pending annotations.", "New account", email)
                 db.commit()
@@ -647,7 +647,7 @@ def addScript1():
         #print filepath1
 
         cur = db.cursor()
-        command = "insert into script (name, filepath) values ("	+ '"' + name + '"' + ","  + '"' + filepath1 + '"' + ");"
+        command = "insert into script (name, filepath) values ("    + '"' + name + '"' + ","  + '"' + filepath1 + '"' + ");"
         cur.execute(command)
         db.commit()
 
@@ -835,7 +835,7 @@ def addCampaign1():
         return redirect(url_for('addCampaign'))
 
     cur = db.cursor()
-    command = "insert into campaign (campaignName,startDate,endDate,periodOfEachRun,deltaTimeForQuery,idScript,numberAnnotations) values  (" +	'"' + name + '"' + ","  + '"' + startDate + '"'+ ","  + '"' + endDate + '"'  + "," + periodDays + "," + days + "," + selectedScript + ", " + number_annotations + ");"
+    command = "insert into campaign (campaignName,startDate,endDate,periodOfEachRun,deltaTimeForQuery,idScript,numberAnnotations) values  (" +    '"' + name + '"' + ","  + '"' + startDate + '"'+ ","  + '"' + endDate + '"'  + "," + periodDays + "," + days + "," + selectedScript + ", " + number_annotations + ");"
     cur.execute(command)
     db.commit()
      
@@ -907,46 +907,19 @@ def addCampaign1():
     flash("New campaign added successfully.","success")
     return redirect(url_for('profile'))
 
-"""
+
 def sendEmail(message, subject, users):
     print >> sys.stderr, "start sending email"
     for user in users:
-        print >> sys.stderr, email
-        fromaddr = 'socialbus@fe.up.pt'
-        toaddrs  = email
+		print >> sys.stderr, user.email
+		sendOneEmail(message, subject,user.email)
+        
 
-    msg = "\r\n".join([
-        "From: annotation.system@gmail.com",
-        "To: " + email,
-        "Subject: " + subject,
-        "",
-        message
-    ])
 
-    print >> sys.stderr, "message built"
-
-    # Credentials (if needed)
-    username = 'annotation.system'
-    password = 'reaction2015'
-    # The actual mail send
-    print >> sys.stderr, "start sending email"
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    print >> sys.stderr, "start smtp server connection"
-    server.ehlo()
-    server.starttls()
-    print >> sys.stderr, "start tls"
-    server.login(username,password)
-    print >> sys.stderr, "login"
-    server.sendmail(fromaddr, toaddrs, msg)
-    print >> sys.stderr, "send email"
-    server.close()
-    print >> sys.stderr, "email sent"
-
-"""
 def sendOneEmail(message, subject, email):
     print >> sys.stderr, "start sending email"
     print >> sys.stderr, email
-    fromaddr = 'socialbus@fe.up.pt'
+    fromaddr = 'annotation.system@gmail.com'
 
     toaddrs  = email
 
@@ -998,6 +971,7 @@ def startCampaign(idCampaign):
     #get run's campaign
     campaigns = []
     cur = db.cursor()
+    print str(idCampaign)
     command = "SELECT * FROM tweets_annotation.campaign where idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
 
@@ -1122,7 +1096,7 @@ def startCampaign(idCampaign):
         for row in cur.fetchall():
             count1 = row[0]
         #print >> sys.stderr, "antes adicionar"
-        if count1 == 0:		#item not in database yet
+        if count1 == 0:        #item not in database yet
             command = "insert into tweets_annotation.candidate_for_selection (idRun,idTweet,selectedForAttribution) values (" + str(run.id) + "," + str(tweet_id) + ",0);"
             cur.execute(command)
         #print >> sys.stderr, "depois adicionar"
@@ -1142,7 +1116,7 @@ def startCampaign(idCampaign):
     for row in cur.fetchall():
         idTweet = row[1]
         selected = row[2]
-        if selected == 0:		#TODO: change to if selected == 1:
+        if selected == 0:        #TODO: change to if selected == 1:
             selectedTweets.append(idTweet)
 
     print >> sys.stderr, "selected tweets"
@@ -1172,14 +1146,14 @@ def startCampaign(idCampaign):
             for row in cur.fetchall():
                 count1 = row[0]
             print >> sys.stderr, "f"
-            if count1 == 0:		#item not in database yet
+            if count1 == 0:        #item not in database yet
                 #count number of attributions
                 command = "SELECT count(*) FROM tweets_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
                 print >> sys.stderr, "g"
-                if attributions < campaign.numberAnnotations:	#verify if it does not exceed threshold
+                if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
                     command = "insert into tweets_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
         db.commit()
@@ -1191,13 +1165,13 @@ def startCampaign(idCampaign):
             for row in cur.fetchall():
                 count1 = row[0]
 
-            if count1 == 0:		#item not in database yet
+            if count1 == 0:        #item not in database yet
                 command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
-                if attributions < campaign.numberAnnotations:	#verify if it does not exceed threshold
+                if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
                     command = "insert into tweets_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
         db.commit()
@@ -1209,7 +1183,7 @@ def startCampaign(idCampaign):
         length_users = len(users) + len(one_shot_users)
         rdm = int(random.random()*length_users)
         tmp = len(users) - 1
-        if rdm > tmp:	#select one_shot_user and reserve special annotation
+        if rdm > tmp:    #select one_shot_user and reserve special annotation
             new_rdm = rdm - len(users)
             user = one_shot_users[new_rdm]
 
@@ -1218,13 +1192,13 @@ def startCampaign(idCampaign):
             for row in cur.fetchall():
                 count1 = row[0]
 
-            if count1 == 0:		#item not in database yet
+            if count1 == 0:        #item not in database yet
                 command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
-                if attributions < campaign.numberAnnotations:	#verify if it does not exceed threshold
+                if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
                     command = "insert into tweets_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
 
@@ -1236,13 +1210,13 @@ def startCampaign(idCampaign):
             for row in cur.fetchall():
                 count1 = row[0]
 
-            if count1 == 0:		#item not in database yet
+            if count1 == 0:        #item not in database yet
                 command = "SELECT count(*) FROM tweets_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
-                if attributions < campaign.numberAnnotations:	#verify if it does not exceed threshold
+                if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
                     command = "insert into tweets_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
     """
@@ -1263,7 +1237,7 @@ def startCampaign(idCampaign):
     print >> sys.stderr, "9"
 
     #send email
-    #sendOneEmail("Your account was selected to start a new annotation run.\nPlease visit reaction.fe.up.pt/annotation and login with your credentials.", "New annotation run", users)
+    sendEmail("Your account was selected to start a new annotation run.\nPlease visit reaction.fe.up.pt/annotation and login with your credentials.", "New annotation run", users)
 
 @app.route("/StopCampaign/<string:id>", methods = ['GET'])
 @login_required
@@ -1398,7 +1372,7 @@ def listCampaigns():
         for row in cur1.fetchall():
             total=row[0]
 
-        if total != 0:	#campaigns that have already started
+        if total != 0:    #campaigns that have already started
             ratio = round(float(closed)/float(total) * 100)
             campaign = Campaign(idCampaign, name, startDate, endDate, period, deltaTime, idScript,"",closed,total,ratio)
             campaigns.append(campaign)
@@ -1559,7 +1533,7 @@ def viewCampaignUser(id):
         for row in cur1.fetchall():
             total=row[0]
 
-        if total != 0:	#campaigns that have already started
+        if total != 0:    #campaigns that have already started
             ratio = round(float(closed)/float(total) * 100)
             run = Run(idRun,startDate,endDate,"",closed,total,ratio)
             runs.append(run)
@@ -1630,7 +1604,7 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
         for row in cur.fetchall():
             count2 = row[0]
 
-        if count1 != 0:	#run hasn't started yet
+        if count1 != 0:    #run hasn't started yet
             total_counter = total_counter + count1 + count2
             #TODO: change to polarities associated in external table (different ids)
             """
@@ -1641,12 +1615,12 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
                 count1 = row[0]
             """
 
-            value6 = value6 + queryPolarity(1,idRun)	#missing
-            value1 = value1 + queryPolarity(2,idRun)	#negative
-            value2 = value2 + queryPolarity(3,idRun)	#positive
-            value3 = value2 + queryPolarity(4,idRun)	#neutral
-            value4 = value4 + queryPolarity(5,idRun)	#objective
-            value5 = value5 + queryPolarity(6,idRun)	#not clear
+            value6 = value6 + queryPolarity(1,idRun)    #missing
+            value1 = value1 + queryPolarity(2,idRun)    #negative
+            value2 = value2 + queryPolarity(3,idRun)    #positive
+            value3 = value2 + queryPolarity(4,idRun)    #neutral
+            value4 = value4 + queryPolarity(5,idRun)    #objective
+            value5 = value5 + queryPolarity(6,idRun)    #not clear
 
 
     value1 = float("{0:.2f}".format(float(value1)/float(total_counter) *100))
@@ -2049,7 +2023,7 @@ def viewRunUser(id,modal):
 
             #name = ""
             #for row in cur1.fetchall():
-            #	name = row[0].decode('iso-8859-1')
+            #    name = row[0].decode('iso-8859-1')
 
             #get tweet text
             text=""
@@ -2320,17 +2294,16 @@ def reAssignOneShotUser(id,idRun):
     return redirect(url_for('viewRun', id=idRun))
 
 #application = DebuggedApplication(app, True)
-#app.run(debug = True)	
+#app.run(debug = True)    
 
 
 
 
-MAIL_USERNAME = 'reaction.system'
-MAIL_PASSWORD =  'reaction2015'
-MAIL_SERVER = 'smtp.gmail.com'
+MAIL_USERNAME = '[insert username here]'
+MAIL_PASSWORD =  '[insert password here]'
+MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
-ADMINS = []
-#ADMINS = ['tiagodscunha@gmail.com']
+ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
 
 if not app.debug:
     import logging
