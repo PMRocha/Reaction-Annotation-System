@@ -25,8 +25,8 @@ from email.mime.text import MIMEText
 
 print >> sys.stderr, "start"
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
-                     user="ssim_annotation", # your username
-                     passwd="", # your password
+                     user="root", # your username
+                     passwd="reaction", # your password
                      db="tweets_annotation") # name of the data base
 db.autocommit(True)
 
