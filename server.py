@@ -25,12 +25,12 @@ from email.mime.text import MIMEText
 
 print >> sys.stderr, "start"
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
-                     user="freixo", # your username
-                     passwd="freixo", # your password
+                     user="root", # your username
+                     passwd="reaction", # your password
                      db="tweets_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/home/freixo/Git/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
