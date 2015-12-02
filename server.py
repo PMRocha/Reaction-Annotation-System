@@ -25,9 +25,9 @@ from email.mime.text import MIMEText
 
 print >> sys.stderr, "start"
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
-                     user="root", # your username
-                     passwd="reaction", # your password
-                     db="tweets_annotation") # name of the data base
+                     user="ssim_annotation", # your username
+                     passwd="ssim_annotation_pass", # your password
+                     db="ssim_annotation") # name of the data base
 db.autocommit(True)
 
 UPLOAD_FOLDER = "/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
