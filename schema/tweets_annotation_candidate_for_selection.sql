@@ -1,8 +1,8 @@
-CREATE DATABASE  IF NOT EXISTS `tweets_annotation` /*!40100 DEFAULT CHARACTER SET latin1 */;
-USE `tweets_annotation`;
+CREATE DATABASE  IF NOT EXISTS `ssim_annotation` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `ssim_annotation`;
 -- MySQL dump 10.13  Distrib 5.6.13, for Win32 (x86)
 --
--- Host: localhost    Database: tweets_annotation
+-- Host: localhost    Database: ssim_annotation
 -- ------------------------------------------------------
 -- Server version	5.6.14
 

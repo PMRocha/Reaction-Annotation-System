@@ -52,6 +52,23 @@
 				}
 			}
 		}
+		
+		function selectAllLabels()
+		{
+			var table = document.getElementById("tableLabels");	
+			for (var i = 0, row; row = table.rows[i]; i++) {
+				for (var j = 0, col; col = row.cells[j]; j++) {
+					var elem1 = col.getElementsByTagName("label")[0];
+					if(typeof elem1 != "undefined"){
+						var elem2 = elem1.getElementsByTagName("input")[0];
+						if(elem2.checked==false)
+							elem2.checked=true;
+						else
+							elem2.checked=false;
+					}
+				}
+			}
+		}
 	</script>
     {%- endblock scripts %}
     
@@ -174,6 +191,22 @@
 									<tr>		
 										<td><label class="checkbox"><input name="selectedScripts" value="{{row.id}}" type="radio"></label></td>
 										<td>{{row.name}}</td>										
+									</tr>
+								{%- endfor %}
+							</table>
+						</div>
+						<div class="col-md-6" style="height:250px;overflow:auto;">
+							<table id="tableLabels" class="table table-hover">
+								<tr>
+									<th><label class="checkbox"><input type="checkbox" onClick="selectAllLabels();"></label></th>
+									<th>Name</th>
+									<th>Description</th>
+								</tr>
+								{%- for row in labels %}
+									<tr>		
+										<td><label class="checkbox"><input name="selectedLabels" value="{{row.id}}" type="checkbox"></label></td>
+										<td>{{row.name}}</td>
+										<td>{{row.description}}</td>										
 									</tr>
 								{%- endfor %}
 							</table>

@@ -30,7 +30,7 @@ db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      db="ssim_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/home/pedro/Desktop/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
@@ -76,6 +76,13 @@ class User:
 
     def __repr__(self):
         return '<User %r>' % (self.name)
+
+class Label:
+	
+	def __init__(self,id,name,description):
+		self.id=id
+		self.name=name
+		self.description=description
 
 class OneShotUser:
 
@@ -358,6 +365,55 @@ def profile():
 
     print >> sys.stderr, campaigns
     return render_template('profile.html',campaigns=campaigns) #, annotations=annotations)
+
+@app.route("/addLabel", methods = ['GET'])
+@login_required
+@requires_roles('admin')
+def addLabel():
+    return render_template('addLabel.html')
+
+@app.route("/addLabel", methods = ['POST'])
+@login_required
+@requires_roles('admin')
+def addLabel1():
+
+    label = request.form['label']
+    description = request.form['description']
+
+    cur = db.cursor()
+    command = "SELECT count(*) FROM classification_label where name=" + '"'+ label + '"' + ";"
+    cur.execute(command)
+    for row in cur.fetchall():
+        count = row[0]
+
+    if count == 0:
+        command = "insert into classification_label (name, description) values ("    + '"' + label + '"' + ","  + '"' + description + '"'");"
+        cur.execute(command)
+        db.commit()
+        flash("New label added successfully.","success")
+        return redirect(url_for('profile'))
+    else:
+        flash("Label is already defined.","error")
+        return redirect(url_for('addUser'))
+
+@app.route("/ListLabels", methods = ['GET'])
+@login_required
+@requires_roles('admin')
+def listLabels():
+    
+    labels = []
+    cur = db.cursor()
+    command = "SELECT * FROM classification_label;"
+    cur.execute(command)
+    for row in cur.fetchall():
+        idLabel = row[0]
+        name = row[1]
+        description = row[2]
+
+        label = Label(unicode(idLabel),name, description)
+        labels.append(label)
+
+    return render_template('listLabels.html', labels=labels)
 
 @app.route("/addUser", methods = ['GET'])
 @login_required
@@ -722,9 +778,22 @@ def addCampaign():
         user = User(unicode(idUser),fullname, email, password_codified, role, active,0)
         users.append(user)
 
+    #get labels
+    labels = []
+    cur = db.cursor()
+    command = "SELECT * FROM classification_label"
+    cur.execute(command)
+    for row in cur.fetchall():
+        idLabel = row[0]
+        name = row[1]
+        description = row[2]
+
+        label = Label(unicode(idLabel),name, description)
+        labels.append(label)
+
     #TODO: let admin define active labels for the new campaign
 
-    return render_template('addCampaign.html',start_date=today, end_date=end, users = users, scripts = scripts)
+    return render_template('addCampaign.html',start_date=today, end_date=end, users = users, scripts = scripts, labels = labels)
 
 
 # Using two-tuples to preserve order.
@@ -791,6 +860,9 @@ def addCampaign1():
 
     selectedUsers = []
     selectedUsers = request.form.getlist('selectedUsers')
+    
+    selectedLabels = []
+    selectedLabels = request.form.getlist('selectedLabels')
 
     selectedScript = ""
     if "selectedScripts" in request.form:
@@ -810,6 +882,9 @@ def addCampaign1():
         return redirect(url_for('addCampaign'))
     if selectedUsers == []:
         flash("No users were assigned to this campaign.","error")
+        return redirect(url_for('addCampaign'))
+    if selectedLabels == []:
+        flash("No Labels were assigned to this campaign.","error")
         return redirect(url_for('addCampaign'))
     if selectedScript == "":
         flash("No script was assigned to this campaign.","error")
@@ -894,8 +969,8 @@ def addCampaign1():
     #associate all labels to campaign
     #TODO: change to selected labels defined by admin
     cur = db.cursor()
-    for i in range(1,7):
-        command = "insert into campaign_classification_labels (idCampaign,idClassification_label) values  (" + str(idCampaign)+ "," + str(i) + ");"
+    for lbl in selectedLabels:
+        command = "insert into campaign_classification_labels (idCampaign,idClassification_label) values  (" + str(idCampaign)+ "," + str(lbl) + ");"
         cur.execute(command)
     db.commit()
 
@@ -957,7 +1032,7 @@ def startCampaign(idCampaign):
     initDate = str(today).split(" ")[0]
     cur = db.cursor()
     run = Run(0,0,0,0,0,0,0)
-    command = "SELECT * FROM tweets_annotation.run where initDate= " + '"' + initDate + '"' + " and status=" + '"' + "schedulled" + '"' + " and idCampaign = " + str(idCampaign) + ";"
+    command = "SELECT * FROM ssim_annotation.run where initDate= " + '"' + initDate + '"' + " and status=" + '"' + "schedulled" + '"' + " and idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
     print >> sys.stderr, "1"
     
@@ -979,7 +1054,7 @@ def startCampaign(idCampaign):
     campaigns = []
     cur = db.cursor()
     print str(idCampaign)
-    command = "SELECT * FROM tweets_annotation.campaign where idCampaign = " + str(idCampaign) + ";"
+    command = "SELECT * FROM ssim_annotation.campaign where idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
 
     print >> sys.stderr, "tweets selected"
@@ -1011,7 +1086,7 @@ def startCampaign(idCampaign):
     #get campaign's users
     users = []
     cur = db.cursor()
-    command = "select * from tweets_annotation.user where user.iduser in (select iduser from campaign_users where idCampaign =" + str(campaign.id) +");"
+    command = "select * from ssim_annotation.user where user.iduser in (select iduser from campaign_users where idCampaign =" + str(campaign.id) +");"
     cur.execute(command)
     for row in cur.fetchall():
         idUser = row[0]
@@ -1031,7 +1106,7 @@ def startCampaign(idCampaign):
     #get campaign's one-shot users
     one_shot_users = []
     cur = db.cursor()
-    command = "select * from tweets_annotation.one_shot_user where idRun =" + str(run.id) +";"
+    command = "select * from ssim_annotation.one_shot_user where idRun =" + str(run.id) +";"
     cur.execute(command)
     for row in cur.fetchall():
         idUser = row[0]
@@ -1044,7 +1119,7 @@ def startCampaign(idCampaign):
     #get campaign's script
     scripts = []
     cur = db.cursor()
-    command = "SELECT * FROM tweets_annotation.script where idScript = " + str(campaign.idScript) + ";"
+    command = "SELECT * FROM ssim_annotation.script where idScript = " + str(campaign.idScript) + ";"
     cur.execute(command)
     for row in cur.fetchall():
         idScript = row[0]
@@ -1101,13 +1176,13 @@ def startCampaign(idCampaign):
         print >> sys.stderr, key
         tweet_id = key
 
-        command = "SELECT count(*) FROM tweets_annotation.candidate_for_selection where idTweet = " + str(tweet_id) + " and idRun = " + str(run.id) + ";"
+        command = "SELECT count(*) FROM ssim_annotation.candidate_for_selection where idTweet = " + str(tweet_id) + " and idRun = " + str(run.id) + ";"
         cur.execute(command)
         for row in cur.fetchall():
             count1 = row[0]
         #print >> sys.stderr, "antes adicionar"
         if count1 == 0:        #item not in database yet
-            command = "insert into tweets_annotation.candidate_for_selection (idRun,idTweet,selectedForAttribution) values (" + str(run.id) + "," + str(tweet_id) + ",0);"
+            command = "insert into ssim_annotation.candidate_for_selection (idRun,idTweet,selectedForAttribution) values (" + str(run.id) + "," + str(tweet_id) + ",0);"
             cur.execute(command)
         #print >> sys.stderr, "depois adicionar"
     db.commit()
@@ -1120,7 +1195,7 @@ def startCampaign(idCampaign):
 
 
     #read table candidate_for_selection, extract selected tweets and clean candidate tweets for this run
-    command = "SELECT * FROM tweets_annotation.candidate_for_selection where idRun = " + str(run.id) + ";"
+    command = "SELECT * FROM ssim_annotation.candidate_for_selection where idRun = " + str(run.id) + ";"
     cur.execute(command)
     selectedTweets = []
     for row in cur.fetchall():
@@ -1131,7 +1206,7 @@ def startCampaign(idCampaign):
 
     print >> sys.stderr, "selected tweets"
 
-    command = "DELETE FROM tweets_annotation.candidate_for_selection where selectedForAttribution=0 and idRun= " + str(run.id) + ";"
+    command = "DELETE FROM ssim_annotation.candidate_for_selection where selectedForAttribution=0 and idRun= " + str(run.id) + ";"
     cur.execute(command)
     db.commit()
 
@@ -1235,13 +1310,13 @@ def startCampaign(idCampaign):
 
     for tweet in tweets:
         for user in users:
-            command = "insert into tweets_annotation.annotation(idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+            command = "insert into ssim_annotation.annotation(idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
             cur.execute(command)
 
 
     #update run status
     cur = db.cursor()
-    command = "UPDATE tweets_annotation.run SET status = " + '"' + "active" + '"' + " where idRun = " + str(run.id) + ";"
+    command = "UPDATE ssim_annotation.run SET status = " + '"' + "active" + '"' + " where idRun = " + str(run.id) + ";"
     cur.execute(command)
     cur.connection.commit();
     print >> sys.stderr, "9"
@@ -2309,8 +2384,8 @@ def reAssignOneShotUser(id,idRun):
 
 
 
-MAIL_USERNAME = '[insert user]'
-MAIL_PASSWORD =  '[insert pw]'
+MAIL_USERNAME = 'Your email here'
+MAIL_PASSWORD =  'your password here'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
