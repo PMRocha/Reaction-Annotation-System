@@ -22,6 +22,7 @@ import random
 import collections
 import smtplib
 from email.mime.text import MIMEText
+import nltk
 
 print >> sys.stderr, "start"
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
@@ -30,7 +31,7 @@ db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      db="ssim_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/home/pedro/Desktop/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/home/ssim_annotation/Reaction-Annotation-System/uploads" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
@@ -455,7 +456,7 @@ def addUser1():
         cur.execute(command)
         db.commit()
         flash("New user added successfully.","success")
-        sendOneEmail("Your account has been successfully registered in reaction.fe.up.pt/annotation.\n Please login to view pending annotations.", "New account", email)
+        sendOneEmail("Your account has been successfully registered in 192.168.102.190:3333.\n Please login to view pending annotations.", "New account", email)
         return redirect(url_for('profile'))
     else:
         flash("Email is already in use.","error")
@@ -524,7 +525,7 @@ def addUsersCSV1():
             if count == 0:
                 command = "insert into user (fullname, email, password_codified, isActive, isAdmin) values ("    + '"' + name + '"' + ","  + '"' + email + '"' + ","    + '"' + codified_password + '"' + ","    + active + "," + admin + ");"
                 cur.execute(command)
-                sendOneEmail("Your account has been successfully registered in reaction.fe.up.pt/annotation.\n Please login to view pending annotations.", "New account", email)
+                sendOneEmail("Your account has been successfully registered in 192.168.102.190:3333.\n Please login to view pending annotations.", "New account", email)
                 db.commit()
                 users.append(name)
     db.commit()
@@ -1038,22 +1039,15 @@ def startCampaign(idCampaign):
     
     for row in cur.fetchall():
         idRun = row[0]
-        print str(idRun)
         startDate = str(row[1]).split(" ")[0]
-        print str(startDate)
         endDate = str(row[2]).split(" ")[0]
-        print str(endDate)
-        idCampaign = row[3]
-        print str(idCampaign)
         solrQuery = row[4]
-        print str(solrQuery)
         run = Run(idRun,startDate,endDate,solrQuery,0,0,0)
         
     print >> sys.stderr, "2"
     #get run's campaign
     campaigns = []
     cur = db.cursor()
-    print str(idCampaign)
     command = "SELECT * FROM ssim_annotation.campaign where idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
 
@@ -1167,13 +1161,13 @@ def startCampaign(idCampaign):
     #print >> sys.stderr, dictionary.keys()
 
     #save candidate tweets
-    """
+    
     print >> sys.stderr, len(dictionary)
     keys = dictionary.keys()
     random.shuffle(keys)
-    print >> sys.stderr, keys
+    #print >> sys.stderr, keys
     for key in keys:
-        print >> sys.stderr, key
+        #print >> sys.stderr, key
         tweet_id = key
 
         command = "SELECT count(*) FROM ssim_annotation.candidate_for_selection where idTweet = " + str(tweet_id) + " and idRun = " + str(run.id) + ";"
@@ -1183,7 +1177,7 @@ def startCampaign(idCampaign):
         #print >> sys.stderr, "antes adicionar"
         if count1 == 0:        #item not in database yet
             command = "insert into ssim_annotation.candidate_for_selection (idRun,idTweet,selectedForAttribution) values (" + str(run.id) + "," + str(tweet_id) + ",0);"
-            cur.execute(command)
+            cur.execute(command)        
         #print >> sys.stderr, "depois adicionar"
     db.commit()
     print >> sys.stderr, "5"
@@ -1225,7 +1219,7 @@ def startCampaign(idCampaign):
         #assign control tweet to all normal users
         for user in users:
             print >> sys.stderr, "d"
-            command = "SELECT count(*) FROM tweets_annotation.annotation where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+            command = "SELECT count(*) FROM ssim_annotation.annotation where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
             print >> sys.stderr, "e"
             cur.execute(command)
             for row in cur.fetchall():
@@ -1233,31 +1227,31 @@ def startCampaign(idCampaign):
             print >> sys.stderr, "f"
             if count1 == 0:        #item not in database yet
                 #count number of attributions
-                command = "SELECT count(*) FROM tweets_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+                command = "SELECT count(*) FROM ssim_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
                 print >> sys.stderr, "g"
                 if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
-                    command = "insert into tweets_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+                    command = "insert into ssim_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
         db.commit()
         print >> sys.stderr, "f"
         #assign tweet to all one-shot users
         for user in one_shot_users:
-            command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+            command = "SELECT count(*) FROM ssim_annotation.annotation_one_shot where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
             cur.execute(command)
             for row in cur.fetchall():
                 count1 = row[0]
 
             if count1 == 0:        #item not in database yet
-                command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+                command = "SELECT count(*) FROM ssim_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
                 if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
-                    command = "insert into tweets_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+                    command = "insert into ssim_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
         db.commit()
 
@@ -1272,41 +1266,41 @@ def startCampaign(idCampaign):
             new_rdm = rdm - len(users)
             user = one_shot_users[new_rdm]
 
-            command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+            command = "SELECT count(*) FROM ssim_annotation.annotation_one_shot where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
             cur.execute(command)
             for row in cur.fetchall():
                 count1 = row[0]
 
             if count1 == 0:        #item not in database yet
-                command = "SELECT count(*) FROM tweets_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+                command = "SELECT count(*) FROM ssim_annotation.annotation_one_shot where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
                 if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
-                    command = "insert into tweets_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+                    command = "insert into ssim_annotation.annotation_one_shot (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
 
         else:
             user = users[rdm]
 
-            command = "SELECT count(*) FROM tweets_annotation.annotation where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+            command = "SELECT count(*) FROM ssim_annotation.annotation where idTweet = " + str(tweet) + " and idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
             cur.execute(command)
             for row in cur.fetchall():
                 count1 = row[0]
 
             if count1 == 0:        #item not in database yet
-                command = "SELECT count(*) FROM tweets_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
+                command = "SELECT count(*) FROM ssim_annotation.annotation where idRun = " + str(run.id) + " and idUser =" + str(user.id) + ";"
                 cur.execute(command)
                 for row in cur.fetchall():
                     attributions = row[0]
 
                 if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
-                    command = "insert into tweets_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+                    command = "insert into ssim_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
                     cur.execute(command)
-    """
+    
     db.commit()
-    print >> sys.stderr, "7"
+    print >> sys.stderr, "8"
 
     for tweet in tweets:
         for user in users:
@@ -1322,7 +1316,7 @@ def startCampaign(idCampaign):
     print >> sys.stderr, "9"
 
     #send email
-    sendEmail("Your account was selected to start a new annotation run.\nPlease visit reaction.fe.up.pt/annotation and login with your credentials.", "New annotation run", users)
+    sendEmail("Your account was selected to start a new annotation run.\nPlease visit 192.168.102.190:3333 and login with your credentials.", "New annotation run", users)
 
 @app.route("/StopCampaign/<string:id>", methods = ['GET'])
 @login_required
@@ -2200,13 +2194,16 @@ def oneShotUserAssign():
         idUser = row[0]
         occupied = row[1]
         idCampaign = row[2]
+        print row
 
         #verify if there are annotations schedulled for this user
         run = 0
         cur = db.cursor()
         command = "SELECT * FROM annotation_one_shot where idUser = " + str(idUser) + ";"
+        print idUser;
         cur.execute(command)
         for row in cur.fetchall():
+            print row
             run = row[2]
 
         if run != 0:
@@ -2381,11 +2378,22 @@ def reAssignOneShotUser(id,idRun):
 #application = DebuggedApplication(app, True)
 #app.run(debug = True)    
 
+def calculateAgreement(idTweet, idRun):
+    cur = db.cursor()
+    command = "SELECT * FROM annotation WHERE idTweet = " + idTweet + " AND idRun = " + idRun + ";"
+    cur.execute(command)
+    
+    toy_data = []
+    
+    for row in cur.fetchall():
+        toy_data.append([str(row[0]),int(row[1]),str(row[5])])
+        
+    task = nltk.metrics.agreement.AnnotationTask(data=toy_data)
 
+    return task.alpha()
 
-
-MAIL_USERNAME = 'Your email here'
-MAIL_PASSWORD =  'your password here'
+MAIL_USERNAME = 'ei11086@fe.up.pt'
+MAIL_PASSWORD =  ''
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
