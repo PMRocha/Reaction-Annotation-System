@@ -849,6 +849,10 @@ def addCampaign1():
     one_shot_users = request.form['one-shot']
     number_annotations = request.form['number_annotations']
     days = request.form['days']
+    size = request.form['limitSolr']
+
+    if size == 0:
+		size = SOLR_QUERY_SIZE
 
     periodDays = 0
     if period == "Daily":
@@ -869,9 +873,12 @@ def addCampaign1():
     if "selectedScripts" in request.form:
         selectedScript = request.form['selectedScripts']
 
-
+    solrQuery = []
     solrQuery = request.form['solr']
-    cleanSolrQuery = sanitize(solrQuery)
+    cleanSolrQuery = []
+    for query in solrQuery:
+       cleanSolrQuery.append(sanitize(query))
+       
 
     if name == "":
         flash("Name is missing.","error")
@@ -891,12 +898,15 @@ def addCampaign1():
         flash("No script was assigned to this campaign.","error")
         return redirect(url_for('addCampaign'))
 
-    if solrQuery != cleanSolrQuery:
-        flash("Solr Query contains invalid characters.","error")
-        return redirect(url_for('addCampaign'))
-    if solrQuery == "":
-        flash("Solr Query is missing. If you do not know Solr syntax or do not wish to pre-filter any parameters, please insert: " + '"' + "*:*" + '"',"error")
-        return redirect(url_for('addCampaign'))
+    for x in xrange(0,len(solrQuery)):
+        if solrQuery[x]!=  cleanSolrQuery[x]:
+            print >> sys.stderr,solrQuery[x]
+            print >> sys.stderr,cleanSolrQuery[x]
+            flash("Solr Query contains invalid characters.","error")
+            return redirect(url_for('addCampaign'))
+        if solrQuery[x] == "":
+            flash("Solr Query is missing. If you do not know Solr syntax or do not wish to pre-filter any parameters, please insert: " + '"' + "*:*" + '"',"error")
+            return redirect(url_for('addCampaign'))
 
 
     start = datetime.datetime.strptime(startDate, '%Y-%m-%d')
@@ -935,6 +945,10 @@ def addCampaign1():
 
     print >> sys.stderr,"added Users"
 
+    totalQuery=""
+    for quer in solrQuery:
+        totalQuery = totalQuery + ";" + quer
+
     #create runs
     counter = start
     while counter < end:
@@ -946,7 +960,7 @@ def addCampaign1():
             break
 
         cur = db.cursor()
-        command = "insert into run (initDate,endDate,idCampaign,solrQuery) values  (" + '"' + str(init) + '"' + "," + '"' + str(finish) + '"' + "," + str(idCampaign)+ "," + '"' + str(solrQuery) + '"'  + ");"
+        command = "insert into run (initDate,endDate,idCampaign,solrQuery) values  (" + '"' + str(init) + '"' + "," + '"' + str(finish) + '"' + "," + str(idCampaign)+ "," + '"' + str(totalQuery) + '"'  + ");"
         cur.execute(command)
         db.commit()
         counter += datetime.timedelta(days=periodValue)
@@ -977,7 +991,7 @@ def addCampaign1():
 
     #load campaign now
     print >> sys.stderr, "addedCampaign"
-    startCampaign(str(idCampaign))
+    startCampaign(str(idCampaign),size)
 
     #subprocess.Popen(['python', '/var/www/annotationSystem2/runningScript.py'])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     flash("New campaign added successfully.","success")
@@ -1028,7 +1042,7 @@ def sendOneEmail(message, subject, email):
     print >> sys.stderr, "email sent"
 
 
-def startCampaign(idCampaign):
+def startCampaign(idCampaign,querySize):
     today = datetime.datetime.now()
     initDate = str(today).split(" ")[0]
     cur = db.cursor()
@@ -1134,21 +1148,28 @@ def startCampaign(idCampaign):
     end = str(endDate).replace(" ","T") + "Z"
     #print >> sys.stderr, "b"
     #print >> sys.stderr, run.__dict__
-    query_string = run.solrQuery + " AND created_at:[" + '"' + init + '"' + " TO " + '"' + end + '"' + "]"
+    separatedQueries = run.solrQuery.split(";")
+    query_string = []
+    for quer in separatedQueries:
+        query_string = quer + " AND created_at:[" + '"' + init + '"' + " TO " + '"' + end + '"' + "]"
     print >> sys.stderr, query_string
     #print >> sys.stderr, "c"
     dictionary = {}
     counter = 0
+    
+    for query in query_string:
+        while counter < querySize:
+            response = s.query(query_string ,start=counter , sort="created_at desc")
 
-    while counter < SOLR_QUERY_SIZE:
-        response = s.query(query_string ,start=counter , sort="created_at desc")
+            for hit in response.results:
+                id = hit['id']
+                text = hit['text'].replace("\n","")
+                dictionary[id] = text
+                
+            if response.results = ""
+			    break;
 
-        for hit in response.results:
-            id = hit['id']
-            text = hit['text'].replace("\n","")
-            dictionary[id] = text
-
-        counter = counter + 10
+            counter = counter + 10
 
     #randomize results and filter number of tweets retrieved
 
@@ -2392,8 +2413,8 @@ def calculateAgreement(idTweet, idRun):
 
     return task.alpha()
 
-MAIL_USERNAME = 'ei11086@fe.up.pt'
-MAIL_PASSWORD =  ''
+MAIL_USERNAME = 'ei11078@fe.up.pt'
+MAIL_PASSWORD =  'futuriopassado12'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
