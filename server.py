@@ -1254,7 +1254,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     print >> sys.stderr, "6"
     #define control group and save annotations: select 10%
     if(len(selectedTweets) < 10):
-        threshold = en(selectedTweets)
+        threshold = len(selectedTweets)
     elif(int(math.floor(0.05*len(selectedTweets))) > 10):
         threshold = int(math.floor(0.05*len(selectedTweets))) #int(math.floor(0.1*len(selectedTweets)))
     else:
@@ -1284,7 +1284,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
                     attributions = row[0]
                 print >> sys.stderr, "g"
                 if attributions < campaign.numberAnnotations:    #verify if it does not exceed threshold
-                    command = "insert into ssim_annotation.annotation (idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
+                    command = "insert into ssim_annotation.annotation (idUser,idTweet,idRun,agreement) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ",1);"
                     cur.execute(command)
         db.commit()
         print >> sys.stderr, "f"
@@ -2575,8 +2575,8 @@ def calculateAgreement(idTweet, idRun):
 
     return task.alpha()
 
-MAIL_USERNAME = 'insertemail'
-MAIL_PASSWORD =  'insertpassword'
+MAIL_USERNAME = 'ei11078@fe.up.pt'
+MAIL_PASSWORD =  'futuriopassado12'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11078@fe.up.pt']
