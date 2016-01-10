@@ -5,6 +5,7 @@ from werkzeug import secure_filename
 import MySQLdb
 import solr
 import unicodedata
+import codecs
 import os
 import sys
 from datetime import timedelta
@@ -31,7 +32,7 @@ db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      db="ssim_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/home/ssim_annotation/Reaction-Annotation-System/uploads" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/home/pedro/Desktop/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
@@ -123,6 +124,11 @@ class Run:
         self.total=total
         self.ratio=ratio
         self.solrQuery = solrQuery
+        
+class Agreement:
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
 
 class Annotation:
     def __init__(self, result, idUser, idTweet, idRun, annotationDate, polarity, isClosed,text, idCampaign, username):
@@ -851,9 +857,9 @@ def addCampaign1():
     days = request.form['days']
     size = request.form['limitSolr']
 
-    if size == 0:
-		size = SOLR_QUERY_SIZE
-
+    if size == "0":
+        size = SOLR_QUERY_SIZE
+	
     periodDays = 0
     if period == "Daily":
         periodDays= "1";
@@ -874,7 +880,11 @@ def addCampaign1():
         selectedScript = request.form['selectedScripts']
 
     solrQuery = []
-    solrQuery = request.form['solr']
+    solrQuery = request.form.getlist('solr')
+    
+    solrTarget = []
+    solrTarget = request.form.getlist('target')
+    
     cleanSolrQuery = []
     for query in solrQuery:
        cleanSolrQuery.append(sanitize(query))
@@ -945,9 +955,12 @@ def addCampaign1():
 
     print >> sys.stderr,"added Users"
 
-    totalQuery=""
-    for quer in solrQuery:
-        totalQuery = totalQuery + ";" + quer
+    totalQuery=solrQuery[0]
+    solrQuery.pop(0)
+    for query in solrQuery:
+        totalQuery = totalQuery + ";" + query
+        
+    print >> sys.stderr,totalQuery
 
     #create runs
     counter = start
@@ -991,7 +1004,7 @@ def addCampaign1():
 
     #load campaign now
     print >> sys.stderr, "addedCampaign"
-    startCampaign(str(idCampaign),size)
+    startCampaign(str(idCampaign),size,solrTarget)
 
     #subprocess.Popen(['python', '/var/www/annotationSystem2/runningScript.py'])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     flash("New campaign added successfully.","success")
@@ -1042,7 +1055,7 @@ def sendOneEmail(message, subject, email):
     print >> sys.stderr, "email sent"
 
 
-def startCampaign(idCampaign,querySize):
+def startCampaign(idCampaign,querySize,solrTarget):
     today = datetime.datetime.now()
     initDate = str(today).split(" ")[0]
     cur = db.cursor()
@@ -1150,40 +1163,52 @@ def startCampaign(idCampaign,querySize):
     #print >> sys.stderr, run.__dict__
     separatedQueries = run.solrQuery.split(";")
     query_string = []
-    for quer in separatedQueries:
-        query_string = quer + " AND created_at:[" + '"' + init + '"' + " TO " + '"' + end + '"' + "]"
-    print >> sys.stderr, query_string
+    target = []
+    for query in separatedQueries:
+        query_string.append("text:" + query + " AND is_rt_b:False AND created_at:[" + '"' + init + '"' + " TO " + '"' + end + '"' + "]")
     #print >> sys.stderr, "c"
     dictionary = {}
-    counter = 0
     
-    for query in query_string:
-        while counter < querySize:
-            response = s.query(query_string ,start=counter , sort="created_at desc")
-
+    cur = db.cursor()
+    command = "SELECT * FROM ssim_annotation.script where idScript = " + str(campaign.idScript) + ";"
+    cur.execute(command)
+    
+    for x in xrange(0,len(query_string)):
+        counter = 0
+        start = 0
+        while counter < int(querySize):
+            start = 0
+            response = s.query(query_string[x] ,start , sort="created_at desc")
             for hit in response.results:
-                id = hit['id']
+                if counter >= int(querySize):
+                    break
+                idTweet = hit['id']
                 text = hit['text'].replace("\n","")
+                cur = db.cursor()
+                command = "INSERT INTO `tweets`(`id_tweet`, `id_campaign`, `target`) VALUES ("+str(idTweet)+","+str(idCampaign)+",'"+solrTarget[x]+"');"
+                cur.execute(command)
+                cur = db.cursor()
+                command = "SELECT LAST_INSERT_ID();"
+                cur.execute(command)
+                for row in cur.fetchall():
+                    id = row[0]
                 dictionary[id] = text
-                
-            if response.results = ""
-			    break;
+                counter+=1
+                start+=1
 
-            counter = counter + 10
+        counter = 0
 
     #randomize results and filter number of tweets retrieved
 
     tweets = dictionary.keys()
     shuffle(tweets)
     tweets = tweets[0:campaign.numberAnnotations]
-    print >> sys.stderr, tweets
 
     print >> sys.stderr, "6"
     #print >> sys.stderr, dictionary.keys()
 
     #save candidate tweets
     
-    print >> sys.stderr, len(dictionary)
     keys = dictionary.keys()
     random.shuffle(keys)
     #print >> sys.stderr, keys
@@ -1228,7 +1253,12 @@ def startCampaign(idCampaign,querySize):
     random.shuffle(selectedTweets)
     print >> sys.stderr, "6"
     #define control group and save annotations: select 10%
-    threshold = 0 #int(math.floor(0.1*len(selectedTweets)))
+    if(len(selectedTweets) < 10):
+        threshold = en(selectedTweets)
+    elif(int(math.floor(0.05*len(selectedTweets))) > 10):
+        threshold = int(math.floor(0.05*len(selectedTweets))) #int(math.floor(0.1*len(selectedTweets)))
+    else:
+	    threshold = 10
     counter = 0
     while counter < threshold:
         print >> sys.stderr, "a"
@@ -1323,10 +1353,17 @@ def startCampaign(idCampaign,querySize):
     db.commit()
     print >> sys.stderr, "8"
 
-    for tweet in tweets:
+    """for tweet in tweets:
         for user in users:
+            print >> sys.stderr, "User ID :"
+            print >> sys.stderr, str(user.id)
+            print >> sys.stderr, "Tweet ID :"
+            print >> sys.stderr, str(tweet)
+            print >> sys.stderr, "Run ID :"
+            print >> sys.stderr, str(run.id)
+            print >> sys.stderr, "\n"
             command = "insert into ssim_annotation.annotation(idUser,idTweet,idRun) values (" + str(user.id) + "," + str(tweet) + "," + str(run.id) + ");"
-            cur.execute(command)
+            cur.execute(command)"""
 
 
     #update run status
@@ -1743,6 +1780,111 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
 
     return render_template('statisticsCampaign.html', chartID=chartID, chart=chart, series=series, title=title,xAxis=xAxis, yAxis=yAxis,)
 
+@app.route("/CalculateAgreement/<string:id>", methods = ['GET'])
+@login_required
+@requires_roles('admin')
+def agreementCampaign(id):
+	
+    campaignUsers = []
+    campaignUsersNames = []
+    runs = []
+    totalCount = 0
+    userCount = 0
+    sums = []
+    agreement = []
+
+    cur = db.cursor()
+    command = "SELECT idUser FROM campaign_users where idCampaign=" + str(id) + ";"
+    cur.execute(command)
+    for row in cur.fetchall():
+        campaignUsers.append(row[0])
+        cur1 = db.cursor()
+        command1 = "SELECT fullname FROM user where iduser=" + str(row[0]) + ";"
+        cur1.execute(command1)
+        for row1 in cur1.fetchall():
+            print >> sys.stderr,row1
+            campaignUsersNames.append(str(row1[0]))
+    cur = db.cursor()
+    command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
+    cur.execute(command)
+    for row in cur.fetchall():
+	    runs.append(row[0])
+	
+    for user in campaignUsers:
+        for run in runs:
+            cur = db.cursor()
+            command = "SELECT idClassification_label FROM annotation where idRun=" + str(run) + " AND idUser=" + str(user) + " AND idClassification_label <> 1 AND agreement=1;"
+            cur.execute(command)
+            for row in cur.fetchall():
+                cur1 = db.cursor()
+                command1 = "SELECT COUNT(*) FROM annotation where idRun=" + str(run) + " AND idUser=" + str(user) + " AND idClassification_label="+str(row[0])+"  AND agreement=1;"
+                cur1.execute(command1)
+                for row1 in cur1.fetchall():
+				    userCount = userCount + float(row1[0])
+                cur1 = db.cursor()
+                command1 = "SELECT COUNT(*) FROM annotation where idRun=" + str(run) + " AND idClassification_label="+str(row[0])+" AND agreement=1;"
+                cur1.execute(command1)
+                for row1 in cur1.fetchall():
+                    totalCount = totalCount + float(row1[0])
+    
+        sums.append(userCount/totalCount)
+        userCount = 0
+        totalCount = 0
+        
+    print >> sys.stderr,sums
+    for x in xrange(0,len(sums)):
+        agreement.append(Agreement(campaignUsersNames[x],sums[x]*100))
+    return render_template('agreementCampaign.html', agreement=agreement,)
+
+@app.route("/ExtractCampaign/<string:id>", methods = ['GET'])
+@login_required
+@requires_roles('admin')
+def extractCampaign(id):
+
+    extractFile = codecs.open("extracted/Campaign:" + id +".csv", 'w',"utf-8-sig")
+
+    extractFile.truncate()
+    
+    extractFile.write("tweet;target;label \n")
+    
+    cur = db.cursor()
+    command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
+    cur.execute(command)
+    for row in cur.fetchall():
+        cur1 = db.cursor()
+        command1 = "SELECT idTweet, idClassification_label FROM annotation where idRun=" + str(row[0]) + ";"
+        cur1.execute(command1)
+        for row1 in cur1.fetchall():
+            idTweet = row1[0]
+            idClassLabel = row1[1]
+            Label = ""
+            cur2 = db.cursor()
+            command2 = "SELECT name FROM classification_label where idClassification_label=" + str(idClassLabel) + ";"
+            cur2.execute(command2)
+            for row2 in cur2.fetchall():
+				Label = row2[0]
+            cur3 = db.cursor()
+            command3 = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
+            cur3.execute(command3)
+            idTweets = ""
+            target = ""
+            for row3 in cur3.fetchall():
+				idTweets = row3[0]
+				target = row3[1]
+            text=""
+            query_string = "id:" + str(idTweets)
+            response = s.query(query_string)
+            for hit in response.results:
+                text = hit['text'].replace("\n","")
+            extractFile.write(text+";"+target+";"+Label+"\n")
+			    
+        
+    
+    extractFile.close()
+
+    return redirect(url_for('profile'))
+
+
 @app.route("/ViewRun/<string:id>", methods = ['GET'])
 @login_required
 @requires_roles('admin')
@@ -1930,7 +2072,7 @@ def viewRun(id):
 @requires_roles('admin')
 def viewRunOneShot(id):
     #print "here"
-
+    targets = []
     annotations = []
     cur = db.cursor()
     command = "SELECT * FROM annotation_one_shot where idRun=" + str(id) + ";"
@@ -1954,13 +2096,21 @@ def viewRunOneShot(id):
         #get user name
         name = ""
 
+        cur1 = db.cursor()
+        command = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
+        cur1.execute(command)
+        for row in cur1.fetchall():
+            TweetID = row[0]
+            target = row[1]
+
         #get tweet text
         text=""
-        query_string = "id:" + str(idTweet)
+        query_string = "id:" + str(TweetID)
         response = s.query(query_string)
         for hit in response.results:
             id = hit['id']
             text = hit['text'].replace("\n","")
+            print >> sys.stderr,hit
 
         if text != "":
             #get campaign id
@@ -1969,7 +2119,7 @@ def viewRunOneShot(id):
             for row in cur.fetchall():
                 idCampaign = row[0]
 
-            annotation = Annotation(result, idUser, idTweet, idRun, annotationDate, polarityName, isClosed, text, idCampaign,name)
+            annotation = Annotation(result, idUser, idTweet, idRun, annotationDate, polarityName, isClosed, text, idCampaign,name,target)
             annotations.append(annotation)
 
             result = result + 1
@@ -2084,6 +2234,7 @@ def viewRunUser(id,modal):
     annotations = []
     labels = []
     cur = db.cursor()
+    targets = []
     command = "SELECT * FROM annotation where idRun=" + str(id) + " and idUser = " + str(current_user.id) + " and isClosed=0;"
     #print command
     cur.execute(command)
@@ -2096,6 +2247,7 @@ def viewRunUser(id,modal):
             annotationDate = str(row[3]).split(" ")[0]
             polarity = row[4]
             isClosed = row[5]
+            
 
             #get user name
             cur1 = db.cursor()
@@ -2125,13 +2277,22 @@ def viewRunUser(id,modal):
             #for row in cur1.fetchall():
             #    name = row[0].decode('iso-8859-1')
 
+            cur1 = db.cursor()
+            command = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
+            cur1.execute(command)
+            for row in cur1.fetchall():
+                TweetID = row[0]
+                target = row[1]
+
             #get tweet text
             text=""
-            query_string = "id:" + str(idTweet)
+            query_string = "id:" + str(TweetID)
             response = s.query(query_string)
             for hit in response.results:
                 id = hit['id']
                 text = hit['text'].replace("\n","")
+                print >> sys.stderr,hit
+                
 
             if text != "":
                 #get campaign id
@@ -2140,11 +2301,12 @@ def viewRunUser(id,modal):
                 for row in cur.fetchall():
                     idCampaign = row[0]
 
-                annotation = Annotation(result, idUser, idTweet, idRun, annotationDate, polarity, isClosed, text, idCampaign,name)
+                annotation = Annotation(result, idUser, idTweet, idRun, annotationDate, polarity, isClosed, text, idCampaign,name,target)
                 annotations.append(annotation)
 
                 result = result + 1
-
+                
+    
     if annotations == []:
         flash("You have successfully annotated all tweets for this run.","success")
         return redirect(url_for('profile'))
@@ -2413,11 +2575,11 @@ def calculateAgreement(idTweet, idRun):
 
     return task.alpha()
 
-MAIL_USERNAME = 'ei11078@fe.up.pt'
-MAIL_PASSWORD =  'futuriopassado12'
+MAIL_USERNAME = 'insertemail'
+MAIL_PASSWORD =  'insertpassword'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
-ADMINS = ['ei11086@fe.up.pt','ei11078@fe.up.pt']
+ADMINS = ['ei11078@fe.up.pt']
 
 if not app.debug:
     import logging

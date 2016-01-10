@@ -27,22 +27,6 @@
     {% block scripts %}
     <script src="{{bootstrap_find_resource('jquery.js', cdn='jquery')}}"></script>
     <script src="{{bootstrap_find_resource('js/bootstrap.js', cdn='bootstrap')}}"></script>
-	<script>
-		function changeVisibility()
-		{
-			var table = document.getElementById("campaigns");			
-			for (var i = 0, row; row = table.rows[i]; i++) {
-				var ratio = row.getAttribute("data-ratio");			
-				if( ratio == "100.0" ){
-					if( row.style.display == 'none' )
-						row.style.display='table-row';
-					else
-						row.style.display = 'none';
-					
-				}	
-			}
-		}
-	</script>
 	
     {%- endblock scripts %}
     
@@ -88,42 +72,22 @@
 		{% endfor %}		
 	  {% endif %}
 	{% endwith %}
-	{% if campaigns|length > 0 %}
-	<p><a href="javascript:void(0)" onclick="changeVisibility();">Show/Hide complete campaigns</a></p>
+
+	
 	<div style="height:500px;overflow:auto;">
-		<table id="campaigns" class="table table-hover" >
+		<table class="table table-hover" >
 			<tr>		
 				<td>Name</td>
-				<td>Start Date</td>
-				<td>End Date</td>
-				<td>Status</td>
-				<td>Details</td>
-				<td>Statistics</td>
+				<td>Agreement</td>
 			  </tr>
-			{%- for row in campaigns %}
-			  
-				  <tr data-ratio="{{row.ratio}}">		
-					<td>{{row.name}}</td>
-					<td>{{row.startDate}}</td>
-					<td>{{row.endDate}}</td>
-					<td>
-						<div class="progress" rel="tooltip" title="{{row.ratio}}%" >
-						  <div class="progress-bar" role="progressbar" aria-valuenow="{{row.closed}}" aria-valuemin="0" aria-valuemax="{{row.total}}" style="width: {{row.ratio}}%;">
-						  </div>
-						</div>
-					</td>
-					<td><a href={{url_for("viewCampaign", id=row.id)}}>View</a></td>
-					<td><!--<a href={{url_for("statisticsCampaign", id=row.id)}}>View</a><br>-->
-					<a href={{url_for("extractCampaign", id=row.id)}}>Extract</a><br>
-					<a href={{url_for("agreementCampaign", id=row.id)}}>Agreement</a></td>
-				  </tr>
-			  
+			{%- for row in agreement %}
+			  <tr>
+				<td style="text-align:left">{{row.name}}</td>			
+				<td style="text-align:left">{{row.value}}%</td>		
+			  </tr>
 			{%- endfor %}
 		</table>
 	</div>
-	{% else %}
-		<h3> There are no campaigns created yet. </h3>
-	{% endif %}
 
   </div>
   

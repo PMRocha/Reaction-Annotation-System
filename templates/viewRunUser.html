@@ -85,8 +85,9 @@
 				<input type="hidden" name="rows" value="{{annotations|length}}">
 				<table class="table table-hover" >
 					<tr>
-						<th style="width: 60%">Tweet</th>
-						<th style="width: 10%">Polarity</th>				
+						<th style="width: 40%">Tweet</th>
+						<th style="width: 40%">Target</th>
+						<th style="width: 30%">Label</th>
 					</tr>
 					{%- for row in annotations %}
 					  {% set outer_loop = loop %}
@@ -95,7 +96,7 @@
 						<input type="hidden" name="run{{loop.index}}" value="{{row.idRun}}">
 						<input type="hidden" name="tweet{{loop.index}}" value="{{row.idTweet}}">
 						<td style="text-align:left;vertical-align:middle;">{{row.text}}</td>
-						
+						<td style="text-align:left;vertical-align:middle;">{{row.target}}</td>
 						<td style="text-align:left;vertical-align:middle;">
 
 							{%- for label in labels %}
