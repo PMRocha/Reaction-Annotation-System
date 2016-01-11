@@ -201,3 +201,11 @@ CREATE TABLE IF NOT EXISTS `user` (
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+--
+-- Dumping data for table `user`
+--
+
+INSERT INTO `user` (`iduser`, `fullname`, `email`, `password_codified`, `isActive`, `isAdmin`) VALUES
+(17, 'Pedro Rocha', 'ei11078@fe.up.pt', '80e334f9b67c0d919c5d922588ec412fe41c9985', 1, 1),
+(18, 'Hugo Freixo', 'ei11086@fe.up.pt', '084efc06bc0c37107cb614ba88b42e5788689748', 1, 1);

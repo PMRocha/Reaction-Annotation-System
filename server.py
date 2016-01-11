@@ -32,7 +32,7 @@ db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      db="ssim_annotation") # name of the data base
 db.autocommit(True)
 
-UPLOAD_FOLDER = "/home/pedro/Desktop/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
+UPLOAD_FOLDER = "/home/ssim_annotation/Reaction-Annotation-System/uploads/" #'C:\Python27\\annotationSystem\uploads'
 ALLOWED_EXTENSIONS = set(['R','py'])
 ALLOWED_EXTENSIONS1 = set(['csv'])
 
