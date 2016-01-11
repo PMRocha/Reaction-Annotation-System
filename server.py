@@ -131,7 +131,7 @@ class Agreement:
         self.value = value
 
 class Annotation:
-    def __init__(self, result, idUser, idTweet, idRun, annotationDate, polarity, isClosed,text, idCampaign, username):
+    def __init__(self, result, idUser, idTweet, idRun, annotationDate, polarity, isClosed,text, idCampaign, username, target):
         self.result = result
         self.idUser = idUser
         self.idTweet = idTweet
@@ -142,6 +142,7 @@ class Annotation:
         self.text = text
         self.idCampaign = idCampaign
         self.username = username
+        self.target = target
 
     def to_JSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -1194,7 +1195,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
                     id = row[0]
                 dictionary[id] = text
                 counter+=1
-                start+=1
+            start+=10
 
         counter = 0
 
@@ -2575,8 +2576,8 @@ def calculateAgreement(idTweet, idRun):
 
     return task.alpha()
 
-MAIL_USERNAME = 'ei11078@fe.up.pt'
-MAIL_PASSWORD =  'futuriopassado12'
+MAIL_USERNAME = 'insertemail'
+MAIL_PASSWORD =  'insertpass'
 MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11078@fe.up.pt']
