@@ -1794,12 +1794,12 @@ def agreementCampaign(id):
     toy_data = []
 
     cur = db.cursor()
-    command = "SELECT id_tweet FROM tweets where id_campaign=" + str(id) + ";"
+    command = "SELECT id,id_tweet FROM tweets where id_campaign=" + str(id) + ";"
     cur.execute(command)
     for row in cur.fetchall():
         campaignTweets.append(row[0])
         text=""
-        query_string = "id:" + str(row[0])
+        query_string = "id:" + str(row[1])
         response = s.query(query_string)
         for hit in response.results:
             text = hit['text'].replace("\n","")
@@ -1809,14 +1809,15 @@ def agreementCampaign(id):
     cur.execute(command)
     for row in cur.fetchall():
 	    runs.append(row[0])
-	
+    
     for tweet in campaignTweets:
         for run in runs:
             cur = db.cursor()
-            command = "SELECT idClassification_label,idUser FROM annotation where idRun=" + str(run) + " AND idTweet=" + str(tweet) + " AND idClassification_label <> 1 AND agreement=1;"
+            command = "SELECT idUser,idClassification_label FROM annotation where idRun=" + str(run) + " AND idTweet=" + str(tweet) + " AND idClassification_label <> 1 AND agreement=1;"
             cur.execute(command)
             for row in cur.fetchall():
-                toy_data.append([str(row[1]),str(tweet),str(row[0])])
+                print >> sys.stderr,row
+                toy_data.append([str(row[0]),int(tweet),str(row[1])])
         task = nltk.metrics.agreement.AnnotationTask(data=toy_data)
         sums.append(task.alpha())
         
