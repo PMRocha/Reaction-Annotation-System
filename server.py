@@ -1786,9 +1786,6 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
 @requires_roles('admin')
 def agreementCampaign(id):
 	
-    from nltk import metrics
-    from nltk.metrics import agreement
-    from nltk.metrics.agreement import AnnotationTask
     campaignTweets = []
     campaignTweetsText = []
     runs = []
