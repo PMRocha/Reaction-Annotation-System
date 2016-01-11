@@ -1786,55 +1786,47 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
 @requires_roles('admin')
 def agreementCampaign(id):
 	
-    campaignUsers = []
-    campaignUsersNames = []
+    from nltk import metrics
+    from nltk.metrics import agreement
+    from nltk.metrics.agreement import AnnotationTask
+    campaignTweets = []
+    campaignTweetsText = []
     runs = []
-    totalCount = 0
-    userCount = 0
     sums = []
     agreement = []
+    toy_data = []
 
     cur = db.cursor()
-    command = "SELECT idUser FROM campaign_users where idCampaign=" + str(id) + ";"
+    command = "SELECT id_tweet FROM tweets where id_campaign=" + str(id) + ";"
     cur.execute(command)
     for row in cur.fetchall():
-        campaignUsers.append(row[0])
-        cur1 = db.cursor()
-        command1 = "SELECT fullname FROM user where iduser=" + str(row[0]) + ";"
-        cur1.execute(command1)
-        for row1 in cur1.fetchall():
-            print >> sys.stderr,row1
-            campaignUsersNames.append(str(row1[0]))
+        campaignTweets.append(row[0])
+        text=""
+        query_string = "id:" + str(row[0])
+        response = s.query(query_string)
+        for hit in response.results:
+            text = hit['text'].replace("\n","")
+        campaignTweetsText.append(text)
     cur = db.cursor()
     command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
     cur.execute(command)
     for row in cur.fetchall():
 	    runs.append(row[0])
 	
-    for user in campaignUsers:
+    for tweet in campaignTweets:
         for run in runs:
             cur = db.cursor()
-            command = "SELECT idClassification_label FROM annotation where idRun=" + str(run) + " AND idUser=" + str(user) + " AND idClassification_label <> 1 AND agreement=1;"
+            command = "SELECT idClassification_label,idUser FROM annotation where idRun=" + str(run) + " AND idTweet=" + str(tweet) + " AND idClassification_label <> 1 AND agreement=1;"
             cur.execute(command)
             for row in cur.fetchall():
-                cur1 = db.cursor()
-                command1 = "SELECT COUNT(*) FROM annotation where idRun=" + str(run) + " AND idUser=" + str(user) + " AND idClassification_label="+str(row[0])+"  AND agreement=1;"
-                cur1.execute(command1)
-                for row1 in cur1.fetchall():
-				    userCount = userCount + float(row1[0])
-                cur1 = db.cursor()
-                command1 = "SELECT COUNT(*) FROM annotation where idRun=" + str(run) + " AND idClassification_label="+str(row[0])+" AND agreement=1;"
-                cur1.execute(command1)
-                for row1 in cur1.fetchall():
-                    totalCount = totalCount + float(row1[0])
-    
-        sums.append(userCount/totalCount)
-        userCount = 0
-        totalCount = 0
+                toy_data.append([str(row[1]),str(tweet),str(row[0])])
+        task = nltk.metrics.agreement.AnnotationTask(data=toy_data)
+        sums.append(task.alpha())
+        
         
     print >> sys.stderr,sums
     for x in xrange(0,len(sums)):
-        agreement.append(Agreement(campaignUsersNames[x],sums[x]*100))
+        agreement.append(Agreement(campaignTweetsText[x],sums[x]*100))
     return render_template('agreementCampaign.html', agreement=agreement,)
 
 @app.route("/ExtractCampaign/<string:id>", methods = ['GET'])
@@ -1842,22 +1834,23 @@ def agreementCampaign(id):
 @requires_roles('admin')
 def extractCampaign(id):
 
-    extractFile = codecs.open("extracted/Campaign:" + id +".csv", 'w',"utf-8-sig")
+    extractFile = codecs.open("results/Campaign:" + id +".csv", 'w',"utf-8-sig")
 
     extractFile.truncate()
     
-    extractFile.write("tweet;target;label \n")
+    extractFile.write("idTweet;tweet;target;label;idUser \n")
     
     cur = db.cursor()
     command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
     cur.execute(command)
     for row in cur.fetchall():
         cur1 = db.cursor()
-        command1 = "SELECT idTweet, idClassification_label FROM annotation where idRun=" + str(row[0]) + ";"
+        command1 = "SELECT idTweet,idUser, idClassification_label FROM annotation where idRun=" + str(row[0]) + " and idClassification_label <> 1;"
         cur1.execute(command1)
         for row1 in cur1.fetchall():
             idTweet = row1[0]
-            idClassLabel = row1[1]
+            idUser = row1[1]
+            idClassLabel = row1[2]
             Label = ""
             cur2 = db.cursor()
             command2 = "SELECT name FROM classification_label where idClassification_label=" + str(idClassLabel) + ";"
@@ -1877,7 +1870,7 @@ def extractCampaign(id):
             response = s.query(query_string)
             for hit in response.results:
                 text = hit['text'].replace("\n","")
-            extractFile.write(text+";"+target+";"+Label+"\n")
+            extractFile.write(str(idTweet)+";"+text+";"+target+";"+Label+";"+str(idUser)+"\n")
 			    
         
     
@@ -2584,13 +2577,10 @@ ADMINS = ['ei11078@fe.up.pt']
 
 if not app.debug:
     import logging
-    from logging.handlers import SMTPHandler
-    credentials = None
-    if MAIL_USERNAME or MAIL_PASSWORD:
-        credentials = (MAIL_USERNAME, MAIL_PASSWORD)
-    mail_handler = SMTPHandler(MAIL_SERVER, MAIL_SERVER, ADMINS, 'microblog failure', credentials)
-    mail_handler.setLevel(logging.ERROR)
-    app.logger.addHandler(mail_handler)
+    from logging import FileHandler
+    file_handler = FileHandler("logfile"+str(datetime.datetime.now())+".log", "w")
+    file_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(file_handler)
 
 
 if __name__ == '__main__':
