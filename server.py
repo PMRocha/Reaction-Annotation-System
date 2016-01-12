@@ -2573,13 +2573,13 @@ MAIL_SERVER = 'smtp.fe.up.pt'
 MAIL_PORT = '587'
 ADMINS = ['ei11078@fe.up.pt']
 
-"""if not app.debug:
+if not app.debug:
     import logging
     from logging import FileHandler
     file_handler = FileHandler("logfile"+str(datetime.datetime.now())+".log", "w")
-    file_handler.setLevel(logging.WARNING)
+    file_handler.setLevel(logging.ERROR)
     app.logger.addHandler(file_handler)
-"""
+
 
 if __name__ == '__main__':
     #app.run(debug = True)
