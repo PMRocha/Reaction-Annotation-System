@@ -226,6 +226,7 @@ def load_user(userid):
 def check_db(userid):
     idUser=0
 
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user where idUser=" + '"'+ userid + '"' + ";"
     cur.execute(command)
@@ -278,6 +279,7 @@ def login():
     print >> sys.stderr, "2"
 
     idUser = 0
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user where email=" + '"'+ email + '"' + ";"
     cur.execute(command)
@@ -336,6 +338,7 @@ def logout():
 @login_required
 def profile():
     campaigns = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign where idCampaign in (select idCampaign from campaign_users where idUser = " + str(current_user.id) +");"
     cur.execute(command)
@@ -350,6 +353,7 @@ def profile():
         #print >> sys.stderr, idCampaign
 
         closed=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.isClosed = 1 and annotation.idUser =" + str(current_user.id) + " and annotation.idRun in ( select idRun from run where idCampaign=" + str(idCampaign) + ");"
         cur1.execute(command)
@@ -357,6 +361,7 @@ def profile():
             closed=row[0]
         #print >> sys.stderr, closed
         total=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.idUser =" + str(current_user.id) + " and annotation.idRun in ( select idRun from run where idCampaign=" + str(idCampaign) + ");"
         cur1.execute(command)
@@ -388,6 +393,7 @@ def addLabel1():
     label = request.form['label']
     description = request.form['description']
 
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT count(*) FROM classification_label where name=" + '"'+ label + '"' + ";"
     cur.execute(command)
@@ -410,6 +416,7 @@ def addLabel1():
 def listLabels():
     
     labels = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM classification_label;"
     cur.execute(command)
@@ -451,7 +458,7 @@ def addUser1():
         admin = "1"
     active="1"
 
-
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT count(*) FROM user where email=" + '"'+ email + '"' + ";"
     cur.execute(command)
@@ -523,6 +530,7 @@ def addUsersCSV1():
 
             active="1"
 
+            db.ping(True)
             cur = db.cursor()
             command = "SELECT count(*) FROM user where email=" + '"'+ email + '"' + ";"
             cur.execute(command)
@@ -576,6 +584,7 @@ def editUser1():
 
     #verify if email is repeated in database
     idUser = 0
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT idUser FROM user where email=" + '"'+ email + '"' + ";"
     cur.execute(command)
@@ -595,10 +604,12 @@ def editUser1():
             command = "UPDATE user SET user.fullname = " + '"' + name + '"' + " where idUser = " + current_user.id;
             cur.execute(command)
         if itm == "email":
+            db.ping(True)
             cur = db.cursor()
             command = "UPDATE user SET user.email = " + '"' + email + '"' + " where idUser = " + current_user.id;
             cur.execute(command)
         if itm == "password":
+            db.ping(True)
             cur = db.cursor()
             command = "UPDATE user SET user.password_codified = " + '"' + codified_password + '"' + " where idUser = " + current_user.id;
             cur.execute(command)
@@ -611,6 +622,7 @@ def editUser1():
 @login_required
 @requires_roles('admin')
 def changeUserStatus(id):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user where iduser=" + id + ";"
     cur.execute(command)
@@ -622,6 +634,7 @@ def changeUserStatus(id):
     else:
         new_status = "1"
 
+    db.ping(True)
     cur = db.cursor()
     command = "UPDATE user SET user.isActive = " + new_status +" where idUser = " + id;
     cur.execute(command)
@@ -633,6 +646,7 @@ def changeUserStatus(id):
 @login_required
 @requires_roles('admin')
 def changeUserAdmin(id):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user where iduser=" + id + ";"
     cur.execute(command)
@@ -645,6 +659,7 @@ def changeUserAdmin(id):
     else:
         new_status = "1"
 
+    db.ping(True)
     cur = db.cursor()
     command = "UPDATE user SET user.isAdmin = " + new_status +" where idUser = " + id;
     cur.execute(command)
@@ -658,6 +673,7 @@ def changeUserAdmin(id):
 def listUsers():
     #get users
     users = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user;"
     cur.execute(command)
@@ -710,6 +726,7 @@ def addScript1():
         filepath1 = MySQLdb.escape_string(filepath)
         #print filepath1
 
+        db.ping(True)
         cur = db.cursor()
         command = "insert into script (name, filepath) values ("    + '"' + name + '"' + ","  + '"' + filepath1 + '"' + ");"
         cur.execute(command)
@@ -727,6 +744,7 @@ def addScript1():
 def listScripts():
     #get scripts
     scripts = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM script;"
     cur.execute(command)
@@ -755,6 +773,7 @@ def addCampaign():
 
     #get scripts
     scripts = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM script;"
     cur.execute(command)
@@ -768,6 +787,7 @@ def addCampaign():
 
     #get users
     users = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM user where user.isActive=1;"
     cur.execute(command)
@@ -788,6 +808,7 @@ def addCampaign():
 
     #get labels
     labels = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM classification_label"
     cur.execute(command)
@@ -931,6 +952,7 @@ def addCampaign1():
         flash("Period chosen is not within Start and End Dates interval.","error")
         return redirect(url_for('addCampaign'))
 
+    db.ping(True)
     cur = db.cursor()
     command = "insert into campaign (campaignName,startDate,endDate,periodOfEachRun,deltaTimeForQuery,idScript,numberAnnotations) values  (" +    '"' + name + '"' + ","  + '"' + startDate + '"'+ ","  + '"' + endDate + '"'  + "," + periodDays + "," + days + "," + selectedScript + ", " + number_annotations + ");"
     cur.execute(command)
@@ -939,6 +961,7 @@ def addCampaign1():
     print >> sys.stderr,"inserted into campaign"
 
     idCampaign = 0
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT LAST_INSERT_ID();"
     cur.execute(command)
@@ -949,6 +972,7 @@ def addCampaign1():
 
     #add users
     for usr in selectedUsers:
+        db.ping(True)
         cur = db.cursor()
         command = "insert into campaign_users (idCampaign,idUser) values  (" + str(idCampaign) + "," +  str(usr) + ");"
         cur.execute(command)
@@ -973,6 +997,7 @@ def addCampaign1():
         if finish > end:
             break
 
+        db.ping(True)
         cur = db.cursor()
         command = "insert into run (initDate,endDate,idCampaign,solrQuery) values  (" + '"' + str(init) + '"' + "," + '"' + str(finish) + '"' + "," + str(idCampaign)+ "," + '"' + str(totalQuery) + '"'  + ");"
         cur.execute(command)
@@ -980,6 +1005,7 @@ def addCampaign1():
         counter += datetime.timedelta(days=periodValue)
 
         idRun = 0
+        db.ping(True)
         cur = db.cursor()
         command = "SELECT LAST_INSERT_ID();"
         cur.execute(command)
@@ -989,6 +1015,7 @@ def addCampaign1():
         #add one-shot users
         cnt = 0
         while cnt < int(one_shot_users):
+            db.ping(True)
             cur = db.cursor()
             command = "insert into one_shot_user (idRun) values  (" + str(idRun) + ");"
             cur.execute(command)
@@ -997,6 +1024,7 @@ def addCampaign1():
         print >> sys.stderr,"added on shot Users"
     #associate all labels to campaign
     #TODO: change to selected labels defined by admin
+    db.ping(True)
     cur = db.cursor()
     for lbl in selectedLabels:
         command = "insert into campaign_classification_labels (idCampaign,idClassification_label) values  (" + str(idCampaign)+ "," + str(lbl) + ");"
@@ -1059,6 +1087,7 @@ def sendOneEmail(message, subject, email):
 def startCampaign(idCampaign,querySize,solrTarget):
     today = datetime.datetime.now()
     initDate = str(today).split(" ")[0]
+    db.ping(True)
     cur = db.cursor()
     run = Run(0,0,0,0,0,0,0)
     command = "SELECT * FROM ssim_annotation.run where initDate= " + '"' + initDate + '"' + " and status=" + '"' + "schedulled" + '"' + " and idCampaign = " + str(idCampaign) + ";"
@@ -1075,6 +1104,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     print >> sys.stderr, "2"
     #get run's campaign
     campaigns = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM ssim_annotation.campaign where idCampaign = " + str(idCampaign) + ";"
     cur.execute(command)
@@ -1107,6 +1137,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     print >> sys.stderr, "3"
     #get campaign's users
     users = []
+    db.ping(True)
     cur = db.cursor()
     command = "select * from ssim_annotation.user where user.iduser in (select iduser from campaign_users where idCampaign =" + str(campaign.id) +");"
     cur.execute(command)
@@ -1127,6 +1158,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     print >> sys.stderr, "4"
     #get campaign's one-shot users
     one_shot_users = []
+    db.ping(True)
     cur = db.cursor()
     command = "select * from ssim_annotation.one_shot_user where idRun =" + str(run.id) +";"
     cur.execute(command)
@@ -1140,6 +1172,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     #print >> sys.stderr, "2"
     #get campaign's script
     scripts = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM ssim_annotation.script where idScript = " + str(campaign.idScript) + ";"
     cur.execute(command)
@@ -1170,6 +1203,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
     #print >> sys.stderr, "c"
     dictionary = {}
     
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM ssim_annotation.script where idScript = " + str(campaign.idScript) + ";"
     cur.execute(command)
@@ -1185,9 +1219,11 @@ def startCampaign(idCampaign,querySize,solrTarget):
                     break
                 idTweet = hit['id']
                 text = hit['text'].replace("\n","")
+                db.ping(True)
                 cur = db.cursor()
                 command = "INSERT INTO `tweets`(`id_tweet`, `id_campaign`, `target`) VALUES ("+str(idTweet)+","+str(idCampaign)+",'"+solrTarget[x]+"');"
                 cur.execute(command)
+                db.ping(True)
                 cur = db.cursor()
                 command = "SELECT LAST_INSERT_ID();"
                 cur.execute(command)
@@ -1368,6 +1404,7 @@ def startCampaign(idCampaign,querySize,solrTarget):
 
 
     #update run status
+    db.ping(True)
     cur = db.cursor()
     command = "UPDATE ssim_annotation.run SET status = " + '"' + "active" + '"' + " where idRun = " + str(run.id) + ";"
     cur.execute(command)
@@ -1384,6 +1421,7 @@ def stopCampaign(id):
 
     #get schedulled runs and set as closed
     runs = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM run where idCampaign = " + str(id) + " and status = " + '"' + "schedulled" + '"' + ";"
     cur.execute(command)
@@ -1394,6 +1432,7 @@ def stopCampaign(id):
 
         run = Run(idRun,startDate,endDate,"",0,0,0)
 
+        db.ping(True)
         cur = db.cursor()
         command = "UPDATE run SET status = " + '"' + "closed" + '"' + " where idRun = " + str(run.id) + ";"
         cur.execute(command)
@@ -1406,6 +1445,7 @@ def stopCampaign(id):
 #@requires_roles('admin')
 def deleteCampaign(id):
     campaign = Campaign(0, "", "", "", "", "", "","",0,0,0)
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign where idCampaign = " + str(id) + ";"
     cur.execute(command)
@@ -1421,6 +1461,7 @@ def deleteCampaign(id):
         campaign = Campaign(idCampaign, name, startDate, endDate, period, deltaTime, idScript,"",0,0,0)
 
     if campaign.id != 0:    #campaign exists
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT * FROM run where idCampaign = " + str(id) + ";"
         cur1.execute(command)
@@ -1433,10 +1474,12 @@ def deleteCampaign(id):
 
             print >> sys.stderr, ("deleting run: " + str(run.id))
 
+            db.ping(True)
             cur3 = db.cursor()
             command = "DELETE FROM run where idRun = " + str(idRun) + ";"
             cur3.execute(command)
-
+            
+            db.ping(True)
             cur2 = db.cursor()
             command = "SELECT * FROM annotation where idRun = " + str(run.id) + ";"
             cur2.execute(command)
@@ -1451,11 +1494,13 @@ def deleteCampaign(id):
 
                 print >> sys.stderr, ("deleting annotation: " + str(annotation.idRun) + " -> " +  str(annotation.idUser) + " -> " + str(annotation.idTweet))
 
+                db.ping(True)
                 cur3 = db.cursor()
                 command = "DELETE FROM annotation where idRun = " + str(idRun) + ";"
                 cur3.execute(command)
 
         db.commit();
+        db.ping(True)
         cur3 = db.cursor()
         command = "SELECT * FROM campaign_users where idCampaign = " + str(campaign.id) + ";"
         cur2.execute(command)
@@ -1465,6 +1510,7 @@ def deleteCampaign(id):
 
             print >> sys.stderr, str("deleting user in campaign: " + str(idUser) + " -> " +  str(idCampaign))
 
+            db.ping(True)
             cur3 = db.cursor()
             command = "DELETE FROM campaign_users where idCampaign = " + str(campaign.id) + ";"
             cur3.execute(command)
@@ -1473,6 +1519,7 @@ def deleteCampaign(id):
 
     print >> sys.stderr, ("deleting Campaign: " + str(campaign.id))
 
+    db.ping(True)
     cur3 = db.cursor()
     command = "DELETE FROM campaign where idCampaign = " + str(campaign.id) + ";"
     cur3.execute(command)
@@ -1484,6 +1531,7 @@ def deleteCampaign(id):
 @requires_roles('admin')
 def listCampaigns():
     campaigns = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign;"
     cur.execute(command)
@@ -1497,6 +1545,7 @@ def listCampaigns():
         idScript = row[6]
 
         closed=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.isClosed = 1 and annotation.idRun in ( select idRun from run where idCampaign=" + str(idCampaign) + ");"
         cur1.execute(command)
@@ -1504,6 +1553,7 @@ def listCampaigns():
             closed=row[0]
 
         total=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.idRun in ( select idRun from run where idCampaign=" + str(idCampaign) + ");"
         cur1.execute(command)
@@ -1521,6 +1571,7 @@ def listCampaigns():
 @login_required
 @requires_roles('admin')
 def viewCampaign(id):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign where idCampaign = " + id + ";"
     cur.execute(command)
@@ -1543,6 +1594,7 @@ def viewCampaign(id):
         campaign = Campaign(idCampaign, name, startDate, endDate, periodDays, deltaTime, idScript,"",0,0,0)
 
     #get script by id
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM script where idScript = " + str(campaign.idScript) + ";"
     cur.execute(command)
@@ -1555,6 +1607,7 @@ def viewCampaign(id):
 
     #get runs
     runs = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM run where idCampaign = " + str(campaign.id) + " and status = " + '"' + "active" + '"' + ";"
     cur.execute(command)
@@ -1568,6 +1621,7 @@ def viewCampaign(id):
 
     #get users
     users = []
+    db.ping(True)
     cur = db.cursor()
     command = "select * from user where user.iduser in (select iduser from campaign_users where idCampaign =" + str(campaign.id) +");"
     cur.execute(command)
@@ -1585,6 +1639,7 @@ def viewCampaign(id):
 
         value_counter=0
         for run in runs:
+            db.ping(True)
             cur1 = db.cursor()
             command = "SELECT count(*) FROM annotation where idClassification_label != 1 and idUser=" + str(idUser) + " and idRun = " +str(run.id) + ";"
             cur1.execute(command)
@@ -1597,6 +1652,7 @@ def viewCampaign(id):
 
         value_counter1=0
         for run in runs:
+            db.ping(True)
             cur1 = db.cursor()
             command = "SELECT count(*) FROM annotation where idUser=" + str(idUser) + " and idRun = " +str(run.id) + ";"
             cur1.execute(command)
@@ -1611,6 +1667,7 @@ def viewCampaign(id):
         users.append(user)
 
     #get campaign status
+    db.ping(True)
     cur1 = db.cursor()
     command = "SELECT count(*) FROM run where idCampaign=" + str(campaign.id) + " and status = " + '"' + "closed" + '"' + ";"
     cur1.execute(command)
@@ -1626,6 +1683,7 @@ def viewCampaign(id):
 @app.route("/ViewCampaignUser/<string:id>", methods = ['GET'])
 @login_required
 def viewCampaignUser(id):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign where idCampaign = " + id + ";"
     cur.execute(command)
@@ -1649,6 +1707,7 @@ def viewCampaignUser(id):
 
     #get runs
     runs = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM run where idCampaign = " + str(campaign.id) + ";"
     cur.execute(command)
@@ -1658,6 +1717,7 @@ def viewCampaignUser(id):
         endDate = str(row[2]).split(" ")[0]
 
         closed=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.isClosed = 1 and annotation.idUser =" + str(current_user.id) + " and annotation.idRun =" + str(idRun) + ";"
         cur1.execute(command)
@@ -1665,6 +1725,7 @@ def viewCampaignUser(id):
             closed=row[0]
 
         total=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "select count(*) from annotation where annotation.idUser =" + str(current_user.id) + " and annotation.idRun =" + str(idRun) + ";"
         cur1.execute(command)
@@ -1680,6 +1741,7 @@ def viewCampaignUser(id):
     return render_template('viewCampaignUser.html', campaign = campaign, runs=runs)
 
 def queryPolarity(polarity,idRun):
+    db.ping(True)
     cur = db.cursor()
     cur.execute("SELECT count(*) FROM annotation where idRun = " + str(idRun) + " and idClassification_label = " + str(polarity) + ";")
     for row in cur.fetchall():
@@ -1698,6 +1760,7 @@ def queryPolarity(polarity,idRun):
 def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_height = 450):
     chart = {"renderTo": chartID, "type": chart_type, "height": chart_height}
 
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM campaign where idCampaign = " + id + ";"
     cur.execute(command)
@@ -1728,6 +1791,7 @@ def statisticsCampaign(id,chartID = 'chart_ID', chart_type = 'line', chart_heigh
     value6 = 0
     total_counter = 0
 
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM run where idCampaign = " + str(campaign.id) + ";"
     cur.execute(command)
@@ -1793,6 +1857,7 @@ def agreementCampaign(id):
     agreement = []
     toy_data = []
 
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT id,id_tweet FROM tweets where id_campaign=" + str(id) + ";"
     cur.execute(command)
@@ -1804,6 +1869,7 @@ def agreementCampaign(id):
         for hit in response.results:
             text = hit['text'].replace("\n","")
         campaignTweetsText.append(text)
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
     cur.execute(command)
@@ -1812,6 +1878,7 @@ def agreementCampaign(id):
     
     for tweet in campaignTweets:
         for run in runs:
+            db.ping(True)
             cur = db.cursor()
             command = "SELECT idUser,idClassification_label FROM annotation where idRun=" + str(run) + " AND idTweet=" + str(tweet) + " AND idClassification_label <> 1 AND agreement=1;"
             cur.execute(command)
@@ -1838,10 +1905,12 @@ def extractCampaign(id):
     
     extractFile.write("idTweet;tweet;target;label;idUser \n")
     
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT idRun FROM run where idCampaign=" + str(id) + ";"
     cur.execute(command)
     for row in cur.fetchall():
+        db.ping(True)
         cur1 = db.cursor()
         command1 = "SELECT idTweet,idUser, idClassification_label FROM annotation where idRun=" + str(row[0]) + " and idClassification_label <> 1;"
         cur1.execute(command1)
@@ -1850,11 +1919,13 @@ def extractCampaign(id):
             idUser = row1[1]
             idClassLabel = row1[2]
             Label = ""
+            db.ping(True)
             cur2 = db.cursor()
             command2 = "SELECT name FROM classification_label where idClassification_label=" + str(idClassLabel) + ";"
             cur2.execute(command2)
             for row2 in cur2.fetchall():
 				Label = row2[0]
+            db.ping(True)
             cur3 = db.cursor()
             command3 = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
             cur3.execute(command3)
@@ -1883,6 +1954,7 @@ def extractCampaign(id):
 def viewRun(id):
     #get normal annotations
     annotations = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation where idRun=" + str(id) + ";"
     cur.execute(command)
@@ -1896,6 +1968,7 @@ def viewRun(id):
         polarity = row[5]
 
         #get polarity label name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT name FROM classification_label where idClassification_label=" + str(polarity) + ";"
         cur1.execute(command)
@@ -1903,6 +1976,7 @@ def viewRun(id):
             polarityName = row[0]
         #print polarityName
         #get user name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT fullname FROM user where idUser=" + str(idUser) + ";"
         cur1.execute(command)
@@ -1933,6 +2007,7 @@ def viewRun(id):
 
     #get one shot annotations
     one_shot_annotations = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation_one_shot where idRun=" + str(id) + ";"
     cur.execute(command)
@@ -1946,6 +2021,7 @@ def viewRun(id):
         polarity = row[5]
 
         #get polarity label name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT name FROM classification_label where idClassification_label=" + str(polarity) + ";"
         cur1.execute(command)
@@ -1977,6 +2053,7 @@ def viewRun(id):
 
     #get one_shot_users
     one_shot_users = []
+    db.ping(True)
     cur1 = db.cursor()
     command = "select * from one_shot_user where idRun =" + str(id) +";"
     cur1.execute(command)
@@ -1984,6 +2061,7 @@ def viewRun(id):
         idUser = row[0]
         occupied = row[1]
 
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT count(*) FROM annotation_one_shot where idClassification_label != 1 and idUser=" + str(idUser) + " and idRun = " +str(id) + ";"
         value_counter=0
@@ -1995,6 +2073,7 @@ def viewRun(id):
         value_counter = value1
 
         value_counter1=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT count(*) FROM annotation_one_shot where idUser=" + str(idUser) + " and idRun = " +str(id) + ";"
         cur1.execute(command)
@@ -2012,6 +2091,7 @@ def viewRun(id):
 
     #get users
     users = []
+    db.ping(True)
     cur = db.cursor()
     command = "select * from user where user.iduser in (select iduser from campaign_users where idCampaign in (select idCampaign from run where idRun=" + str(id) +"));"
     cur.execute(command)
@@ -2028,6 +2108,7 @@ def viewRun(id):
             role="admin"
 
         value_counter=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT count(*) FROM annotation where idClassification_label != 1 and idUser=" + str(idUser) + " and idRun = " +str(id) + ";"
         #print command
@@ -2040,6 +2121,7 @@ def viewRun(id):
         #print value_counter
 
         value_counter1=0
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT count(*) FROM annotation where idUser=" + str(idUser) + " and idRun = " +str(id) + ";"
         #print command
@@ -2066,6 +2148,7 @@ def viewRunOneShot(id):
     #print "here"
     targets = []
     annotations = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation_one_shot where idRun=" + str(id) + ";"
     cur.execute(command)
@@ -2079,6 +2162,7 @@ def viewRunOneShot(id):
         polarity = row[5]
 
         #get polarity label name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT name FROM classification_label where idClassification_label=" + str(polarity) + ";"
         cur1.execute(command)
@@ -2088,6 +2172,7 @@ def viewRunOneShot(id):
         #get user name
         name = ""
 
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
         cur1.execute(command)
@@ -2121,6 +2206,7 @@ def viewRunOneShot(id):
 @app.route("/AnnotationsRun/<string:id>", methods = ['GET'])
 def annotationsRun(id):
     annotations = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation where idRun=" + str(id) + ";"
     cur.execute(command)
@@ -2134,6 +2220,7 @@ def annotationsRun(id):
         polarity = row[5]
 
         #get polarity label name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT name FROM classification_label where idClassification_label=" + str(polarity) + ";"
         cur1.execute(command)
@@ -2141,6 +2228,7 @@ def annotationsRun(id):
             polarityName = row[0]
         #print polarityName
         #get user name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT fullname FROM user where idUser=" + str(idUser) + ";"
         cur1.execute(command)
@@ -2175,6 +2263,7 @@ def annotationsRun(id):
 @app.route("/AnnotationsRunOneShot/<string:id>", methods = ['GET'])
 def annotationsRunOneShot(id):
     annotations = []
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation_one_shot where idRun=" + str(id) + ";"
     cur.execute(command)
@@ -2188,6 +2277,7 @@ def annotationsRunOneShot(id):
         polarity = row[5]
 
         #get polarity label name
+        db.ping(True)
         cur1 = db.cursor()
         command = "SELECT name FROM classification_label where idClassification_label=" + str(polarity) + ";"
         cur1.execute(command)
@@ -2225,6 +2315,7 @@ def annotationsRunOneShot(id):
 def viewRunUser(id,modal):
     annotations = []
     labels = []
+    db.ping(True)
     cur = db.cursor()
     targets = []
     command = "SELECT * FROM annotation where idRun=" + str(id) + " and idUser = " + str(current_user.id) + " and isClosed=0;"
@@ -2242,6 +2333,7 @@ def viewRunUser(id,modal):
             
 
             #get user name
+            db.ping(True)
             cur1 = db.cursor()
             command = "SELECT fullname FROM user where idUser=" + str(idUser) + ";"
             cur1.execute(command)
@@ -2253,6 +2345,7 @@ def viewRunUser(id,modal):
             #get campaign's labels
             labels = []
             labelDescriptor = ""
+            db.ping(True)
             cur1 = db.cursor()
             command = "select * from classification_label where idClassification_label in (select idClassification_label from campaign_classification_labels where idCampaign in ( SELECT idCampaign FROM campaign where idCampaign in ( select idCampaign from run where idRun=" + str(idRun) + ")));"
             cur1.execute(command)
@@ -2269,6 +2362,7 @@ def viewRunUser(id,modal):
             #for row in cur1.fetchall():
             #    name = row[0].decode('iso-8859-1')
 
+            db.ping(True)
             cur1 = db.cursor()
             command = "SELECT id_tweet,target FROM tweets where id=" + str(idTweet) + ";"
             cur1.execute(command)
@@ -2349,6 +2443,7 @@ def addAnnotation():
         todayDate = str(datetime.datetime.now()).split(" ")[0]  #'%Y-%m-%d'
 
         #update annotation in database
+        db.ping(True)
         cur = db.cursor()
         command = "UPDATE annotation SET idClassification_label = " + polarity + ",annotationDate = " + '"' + todayDate + '"' + ", isClosed = 1 where idUser = " + str(user) + " and idRun = " + str(run) + " and idTweet = " + str(tweet) + ";"
         #print command
@@ -2362,6 +2457,7 @@ def addAnnotation():
 @app.route("/OneShotUserAssignment", methods = ['GET'])
 def oneShotUserAssign():
     #get user
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM one_shot_user where isOccupied=0;"
     cur.execute(command)
@@ -2373,6 +2469,7 @@ def oneShotUserAssign():
 
         #verify if there are annotations schedulled for this user
         run = 0
+        db.ping(True)
         cur = db.cursor()
         command = "SELECT * FROM annotation_one_shot where idUser = " + str(idUser) + ";"
         print idUser;
@@ -2397,10 +2494,12 @@ def oneShotUserAssign():
 def oneShotAnnotation(idUser,modal):
     annotations = []
     labels = []
+    db.ping(True)
     cur = db.cursor()
 
     #get assigned run
     run = 0
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation_one_shot where idUser = " + str(idUser) + ";"
     cur.execute(command)
@@ -2424,6 +2523,7 @@ def oneShotAnnotation(idUser,modal):
             labelDescriptor =""
             #get campaign's labels
             labels = []
+            db.ping(True)
             cur1 = db.cursor()
             command = "select * from classification_label where idClassification_label in (select idClassification_label from campaign_classification_labels where idCampaign in ( SELECT idCampaign FROM campaign where idCampaign in ( select idCampaign from run where idRun=" + str(idRun) + ")));"
             cur1.execute(command)
@@ -2520,6 +2620,7 @@ def addAnnotationOneShot():
         todayDate = str(datetime.datetime.now()).split(" ")[0]  #'%Y-%m-%d'
 
         #update annotation in database
+        db.ping(True)
         cur = db.cursor()
         command = "UPDATE annotation_one_shot SET idClassification_label = " + polarity + ",annotationDate = " + '"' + todayDate + '"' + ", isClosed = 1 where idUser = " + str(user) + " and idRun = " + str(run) + " and idTweet = " + str(tweet) + ";"
         #print command
@@ -2534,6 +2635,7 @@ def addAnnotationOneShot():
 @login_required
 @requires_roles('admin')
 def reAssignOneShotUser(id,idRun):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM one_shot_user where idUser=" + id + ";"
     cur.execute(command)
@@ -2543,6 +2645,7 @@ def reAssignOneShotUser(id,idRun):
     if occupied == 1:
         new_status = "0"
 
+        db.ping(True)
         cur = db.cursor()
         command = "UPDATE one_shot_user SET isOccupied = " + new_status +" where idUser = " + id;
         cur.execute(command)
@@ -2554,6 +2657,7 @@ def reAssignOneShotUser(id,idRun):
 #app.run(debug = True)    
 
 def calculateAgreement(idTweet, idRun):
+    db.ping(True)
     cur = db.cursor()
     command = "SELECT * FROM annotation WHERE idTweet = " + idTweet + " AND idRun = " + idRun + ";"
     cur.execute(command)

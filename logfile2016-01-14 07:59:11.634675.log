@@ -1,0 +1,31 @@
+Exception on / [GET]
+Traceback (most recent call last):
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 1817, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 1477, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 1381, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 1475, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 1461, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "server.py", line 264, in hello
+    return render_template('index.html')
+  File "/usr/local/lib/python2.7/dist-packages/flask/templating.py", line 126, in render_template
+    ctx.app.update_template_context(context)
+  File "/usr/local/lib/python2.7/dist-packages/flask/app.py", line 716, in update_template_context
+    context.update(func())
+  File "/usr/local/lib/python2.7/dist-packages/flask_login.py", line 891, in _user_context_processor
+    return dict(current_user=_get_user())
+  File "/usr/local/lib/python2.7/dist-packages/flask_login.py", line 858, in _get_user
+    current_app.login_manager._load_user()
+  File "/usr/local/lib/python2.7/dist-packages/flask_login.py", line 389, in _load_user
+    return self.reload_user()
+  File "/usr/local/lib/python2.7/dist-packages/flask_login.py", line 351, in reload_user
+    user = self.user_callback(user_id)
+  File "server.py", line 224, in load_user
+    return check_db(userid)
+  File "server.py", line 229, in check_db
+    db.ping(TRUE)
+NameError: global name 'TRUE' is not defined
